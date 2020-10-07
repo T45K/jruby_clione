@@ -199,10 +199,15 @@ public class RubyBignum extends RubyInteger {
      * This is here because for C extensions ulong can hold different values without throwing a RangeError
      */
     public static long big2ulong(RubyBignum value) {
+        Ruby runtime = value.getRuntime();
+
         BigInteger big = value.getValue();
 
-        if (big.compareTo(LONG_MIN) <= 0 || big.compareTo(ULONG_MAX) > 0) {
-            throw value.getRuntime().newRangeError("bignum too big to convert into `ulong'");
+        return big2ulong(runtime, big);
+
+    public static long big2ulong(Ruby runtime, BigInteger big){
+        if (big.compareTo(BigInteger.ZERO) <= 0 || big.compareTo(ULONG_MAX) > 0) {
+            throw runtime.newRangeError("bignum too big to convert into `ulong'");
         }
         return value.getValue().longValue();
     }
