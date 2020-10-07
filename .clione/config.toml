@@ -1,0 +1,2 @@
+src = "core/src/main/java"
+clone_detector = "scc"
