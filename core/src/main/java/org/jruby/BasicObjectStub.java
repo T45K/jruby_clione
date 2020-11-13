@@ -430,3 +430,4 @@ public final class BasicObjectStub {
     public static void setVariable(IRubyObject self, int index, Object value) {
     }
 }
+

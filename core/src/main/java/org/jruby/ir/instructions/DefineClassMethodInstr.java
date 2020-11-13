@@ -65,3 +65,5 @@ public class DefineClassMethodInstr extends OneOperandInstr implements FixedArit
         visitor.DefineClassMethodInstr(this);
     }
 }
+
+

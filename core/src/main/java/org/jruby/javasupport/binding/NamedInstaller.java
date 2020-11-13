@@ -32,3 +32,5 @@ public abstract class NamedInstaller {
     //boolean isProtected() { return visibility == Visibility.PROTECTED; }
 
 }
+
+

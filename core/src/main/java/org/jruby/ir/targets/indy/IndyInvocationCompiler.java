@@ -194,3 +194,5 @@ public class IndyInvocationCompiler implements InvocationCompiler {
         normalCompiler.invokeEQQ(call);
     }
 }
+
+

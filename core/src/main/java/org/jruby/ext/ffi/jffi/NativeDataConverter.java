@@ -34,3 +34,5 @@ abstract public class NativeDataConverter {
     abstract public IRubyObject toNative(ThreadContext context, IRubyObject obj);
     abstract public NativeType nativeType();
 }
+
+

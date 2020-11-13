@@ -40,3 +40,5 @@ public class FloatObjectSite extends LazyObjectSite {
         return RubyFloat.newFloat(context.runtime, value);
     }
 }
+
+

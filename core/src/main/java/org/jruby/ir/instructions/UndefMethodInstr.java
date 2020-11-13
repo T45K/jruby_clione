@@ -63,3 +63,5 @@ public class UndefMethodInstr extends OneOperandResultBaseInstr implements Fixed
         visitor.UndefMethodInstr(this);
     }
 }
+
+

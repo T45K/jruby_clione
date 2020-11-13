@@ -160,3 +160,5 @@ public class NonvolatileVariableAccessor extends VariableAccessor {
         return self.varTableStamp == currentStamp;
     }
 }
+
+

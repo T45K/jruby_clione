@@ -25,3 +25,5 @@ public class PopMethodFrameInstr extends NoOperandInstr implements FixedArityIns
         visitor.PopMethodFrameInstr(this);
     }
 }
+
+

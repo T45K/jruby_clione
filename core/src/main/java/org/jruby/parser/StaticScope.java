@@ -785,3 +785,5 @@ public class StaticScope implements Serializable {
         this.ivarNames = ivarWrites;
     }
 }
+
+

@@ -80,3 +80,5 @@ public final class StructByValue extends Type {
         return structClass;
     }
 }
+
+

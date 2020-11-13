@@ -6,3 +6,5 @@ public interface MarshalEncoding {
     boolean shouldMarshalEncoding();
     Encoding getMarshalEncoding();
 }
+
+

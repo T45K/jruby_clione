@@ -26,3 +26,5 @@ public class StringJavaAddons {
         return Java.getInstance(context.runtime, self.convertToString().asJavaString());
     }
 }
+
+

@@ -192,3 +192,5 @@ public class JRubyCallSite extends MutableCallSite {
             .appendArg("self", IRubyObject.class)
             .appendArg("class", RubyClass.class);
 }
+
+

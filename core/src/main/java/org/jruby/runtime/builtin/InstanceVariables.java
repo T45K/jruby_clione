@@ -75,3 +75,5 @@ public interface InstanceVariables {
      */
     void copyInstanceVariablesInto(InstanceVariables other);
 }
+
+

@@ -58,3 +58,4 @@ public enum PathType {
      */
     CLASSPATH
 }
+

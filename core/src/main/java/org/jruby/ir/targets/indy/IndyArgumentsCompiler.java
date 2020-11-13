@@ -26,3 +26,5 @@ public class IndyArgumentsCompiler implements ArgumentsCompiler {
         compiler.adapter.invokedynamic("kwargsHash", CodegenUtils.sig(JVM.OBJECT, params(ThreadContext.class, RubyHash.class, JVM.OBJECT, length * 2)), Bootstrap.kwargsHash());
     }
 }
+
+

@@ -41,3 +41,5 @@ public abstract class EventHook {
         return eventSet().stream().anyMatch(evt -> evt.requiresDebug());
     }
 }
+
+

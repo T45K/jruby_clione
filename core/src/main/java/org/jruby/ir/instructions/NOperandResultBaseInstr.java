@@ -28,3 +28,5 @@ public abstract class NOperandResultBaseInstr extends ResultBaseInstr {
         operands[i] = operand;
     }
 }
+
+

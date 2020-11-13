@@ -22,3 +22,5 @@ public class UnboxFixnumInstr extends UnboxInstr {
         visitor.UnboxFixnumInstr(this);
     }
 }
+
+

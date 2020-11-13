@@ -38,3 +38,5 @@ public class FixnumObjectSite extends LazyObjectSite {
         return context.runtime.newFixnum(value);
     }
 }
+
+

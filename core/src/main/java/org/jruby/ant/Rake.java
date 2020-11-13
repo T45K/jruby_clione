@@ -22,3 +22,5 @@ public class Rake extends RakeTaskBase {
     }
     // FIXME: Add flag to allow registering all defined ant tasks in Rake dependency tree?
 }
+
+

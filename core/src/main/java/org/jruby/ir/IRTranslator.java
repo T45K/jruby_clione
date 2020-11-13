@@ -44,3 +44,5 @@ public abstract class IRTranslator<R, S> {
 
     protected abstract R execute(Ruby runtime, IRScriptBody producedIrScope, S specificObject);
 }
+
+

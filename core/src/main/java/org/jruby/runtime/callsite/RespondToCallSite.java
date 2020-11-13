@@ -170,3 +170,4 @@ public class RespondToCallSite extends MonomorphicCallSite {
         return new RespondToTuple(newString, checkVisibility, respondToMethod, respondToLookupResult, RubyBoolean.newBoolean(context, respondsTo));
     }
 }
+

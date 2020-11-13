@@ -54,3 +54,5 @@ public interface MethodEnhancer {
      */
     public DynamicMethod enhance(String id, DynamicMethod delegate);
 }
+
+

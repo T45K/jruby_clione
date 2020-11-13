@@ -214,3 +214,5 @@ public class RubyObjectSpace {
         private final WeakValuedIdentityMap<IRubyObject, IRubyObject> map = new WeakValuedIdentityMap<IRubyObject, IRubyObject>();
     }
 }
+
+

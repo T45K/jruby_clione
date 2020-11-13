@@ -39,3 +39,5 @@ public class RMD160 implements Library {
         org.jruby.ext.digest.RubyDigest.createDigestRMD160(runtime);
     }
 }
+
+

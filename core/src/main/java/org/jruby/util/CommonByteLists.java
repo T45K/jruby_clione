@@ -30,3 +30,5 @@ public class CommonByteLists {
     public static final ByteList USING_METHOD = new ByteList(new byte[] {'u', 's', 'i', 'n', 'g'});
     public static final ByteList REFINE_METHOD = new ByteList(new byte[] {'r', 'e', 'f', 'i', 'n', 'e'});
 }
+
+

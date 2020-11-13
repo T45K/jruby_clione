@@ -246,3 +246,5 @@ public class RubyWarnings implements IRubyWarnings, WarnCallback {
         errorStream.callMethod(runtime.getCurrentContext(), "write", runtime.newString(buffer.toString()));
     }
 }
+
+

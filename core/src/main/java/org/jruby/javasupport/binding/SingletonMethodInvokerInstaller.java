@@ -25,3 +25,5 @@ public class SingletonMethodInvokerInstaller extends StaticMethodInvokerInstalle
         defineMethods(singletonClass, new SingletonMethodInvoker(this.singleton, singletonClass, () -> methods.toArray(new Method[methods.size()]), name), false);
     }
 }
+
+

@@ -37,3 +37,5 @@ public class CoverageLibrary implements Library {
         coverage.defineAnnotatedMethods(CoverageModule.class);
     }
 }
+
+

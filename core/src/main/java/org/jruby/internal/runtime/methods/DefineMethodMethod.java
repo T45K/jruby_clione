@@ -47,3 +47,5 @@ public class DefineMethodMethod extends MixedModeIRMethod {
         return super.call(context, self, clazz, name, arg0, arg1, arg2, capturedBlock);
     }
 }
+
+

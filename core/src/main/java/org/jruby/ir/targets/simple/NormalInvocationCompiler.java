@@ -392,3 +392,5 @@ public class NormalInvocationCompiler implements InvocationCompiler {
         compiler.invokeIRHelper("isEQQ", sig(IRubyObject.class, ThreadContext.class, IRubyObject.class, IRubyObject.class, CallSite.class, boolean.class));
     }
 }
+
+

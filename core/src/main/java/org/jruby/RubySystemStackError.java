@@ -51,3 +51,5 @@ public class RubySystemStackError extends RubyException {
         return new SystemStackError(message, this);
     }
 }
+
+

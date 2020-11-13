@@ -23,3 +23,5 @@ public interface ObjectAllocator {
         throw runtime.newTypeError("allocator undefined for " + klass.getName());
     };
 }
+
+

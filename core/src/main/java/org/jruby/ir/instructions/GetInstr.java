@@ -42,3 +42,4 @@ public abstract class GetInstr extends OneOperandResultBaseInstr implements Fixe
         return new String[] {"name: " + getName()};
     }
 }
+

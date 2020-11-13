@@ -16,3 +16,5 @@ public class WhenOneArgNode extends WhenNode {
         super(position, expressionNode, bodyNode, nextCase);
     }
 }
+
+

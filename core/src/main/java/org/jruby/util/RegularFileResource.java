@@ -348,3 +348,5 @@ class RegularFileResource implements FileResource {
     }
 
 }
+
+

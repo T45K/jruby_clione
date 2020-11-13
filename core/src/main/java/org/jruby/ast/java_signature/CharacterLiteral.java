@@ -20,3 +20,4 @@ public class CharacterLiteral implements Literal {
         return "'" + string + "'";
     }
 }
+

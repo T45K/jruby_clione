@@ -91,3 +91,5 @@ public class JVM {
     public static final Type STATICSCOPE_TYPE = Type.getType(STATICSCOPE);
     public static final Type RUBY_MODULE_TYPE = Type.getType(RUBY_MODULE);
 }
+
+

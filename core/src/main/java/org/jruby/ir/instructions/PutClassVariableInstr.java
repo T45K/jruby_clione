@@ -51,3 +51,5 @@ public class PutClassVariableInstr extends PutInstr implements FixedArityInstr {
         visitor.PutClassVariableInstr(this);
     }
 }
+
+

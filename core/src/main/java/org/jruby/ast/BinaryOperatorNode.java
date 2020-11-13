@@ -46,3 +46,4 @@ public interface BinaryOperatorNode {
 	 */
 	public abstract Node getSecondNode();
 }
+

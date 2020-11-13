@@ -36,3 +36,5 @@ public class BFalseInstr extends OneOperandBranchInstr implements FixedArityInst
         return !((IRubyObject)value1).isTrue() ? getJumpTarget().getTargetPC() : ipc;
     }
 }
+
+

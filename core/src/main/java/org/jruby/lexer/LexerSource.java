@@ -93,3 +93,4 @@ public abstract class LexerSource {
 
     public abstract IRubyObject getRemainingAsIO();
 }
+

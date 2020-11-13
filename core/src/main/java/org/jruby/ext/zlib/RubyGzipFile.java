@@ -328,3 +328,4 @@ public class RubyGzipFile extends RubyObject implements IOEncodable {
     protected EConv readTranscoder = null;
     protected EConv writeTranscoder = null;
 }
+

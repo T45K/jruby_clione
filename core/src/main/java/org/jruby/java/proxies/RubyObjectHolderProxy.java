@@ -11,3 +11,5 @@ import org.jruby.runtime.builtin.IRubyObject;
 public interface RubyObjectHolderProxy {
     IRubyObject __ruby_object();
 }
+
+

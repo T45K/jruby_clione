@@ -258,3 +258,4 @@ public class JRubyEngine implements Compilable, Invocable, ScriptEngine {
         return container.getInstance(receiver, returnType);
     }
 }
+

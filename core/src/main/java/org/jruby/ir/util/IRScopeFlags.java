@@ -5,3 +5,5 @@ package org.jruby.ir.util;
  */
 public class IRScopeFlags {
 }
+
+

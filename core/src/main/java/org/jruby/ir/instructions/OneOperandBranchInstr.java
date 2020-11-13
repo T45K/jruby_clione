@@ -53,3 +53,5 @@ public abstract class OneOperandBranchInstr extends BranchInstr {
         e.encode(getArg1());
     }
 }
+
+

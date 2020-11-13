@@ -69,3 +69,5 @@ public class BlockJITClassGenerator extends JITClassGenerator {
     private final MixedModeIRBlockBody body;
 
 }
+
+

@@ -82,3 +82,5 @@ public interface IRReaderDecoder {
      */
     public IRReaderDecoder dup();
 }
+
+

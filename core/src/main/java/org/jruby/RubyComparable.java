@@ -274,3 +274,5 @@ public class RubyComparable {
 
     private static final CmpRecursive CMP_RECURSIVE = new CmpRecursive();
 }
+
+

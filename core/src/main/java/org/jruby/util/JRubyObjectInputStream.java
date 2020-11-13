@@ -25,3 +25,4 @@ public class JRubyObjectInputStream extends ObjectInputStream {
         }
     }
 }
+

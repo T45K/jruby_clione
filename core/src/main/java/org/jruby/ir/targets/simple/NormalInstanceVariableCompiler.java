@@ -93,3 +93,5 @@ public class NormalInstanceVariableCompiler implements InstanceVariableCompiler 
         compiler.adapter.invokestatic(className, methodName, incomingSig);
     }
 }
+
+

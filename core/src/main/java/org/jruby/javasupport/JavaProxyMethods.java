@@ -114,3 +114,5 @@ public class JavaProxyMethods {
         return ((JavaObject) recv.dataGetStruct()).ruby_synchronized(context, block);
     }
 }
+
+

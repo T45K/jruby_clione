@@ -35,3 +35,5 @@ public class IndyGlobalVariableCompiler implements GlobalVariableCompiler {
                 file, line);
     }
 }
+
+

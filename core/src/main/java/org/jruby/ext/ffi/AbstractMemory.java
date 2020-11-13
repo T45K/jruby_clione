@@ -2125,3 +2125,5 @@ abstract public class AbstractMemory extends MemoryObject {
     abstract protected Pointer getPointer(Ruby runtime, long offset);
 
 }
+
+

@@ -38,3 +38,5 @@ public class RangeError extends StandardError {
         super(message, exception);
     }
 }
+
+

@@ -251,3 +251,5 @@ public class VariableSite extends MutableCallSite {
         return id == ((RubyBasicObject)self).getMetaClass().getRealClass().id;
     }
 }
+
+

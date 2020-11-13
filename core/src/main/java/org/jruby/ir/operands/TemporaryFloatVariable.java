@@ -66,3 +66,5 @@ public class TemporaryFloatVariable extends TemporaryLocalVariable {
         return new TemporaryFloatVariable(d.decodeInt());
     }
 }
+
+

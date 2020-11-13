@@ -59,3 +59,5 @@ public class SelfFirstJRubyClassLoader extends JRubyClassLoader {
         return resource;
     }
 }
+
+

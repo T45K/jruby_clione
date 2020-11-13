@@ -117,3 +117,5 @@ public class InterpretedIRBodyMethod extends InterpretedIRMethod {
         return call(context, self, clazz, name, Block.NULL_BLOCK);
     }
 }
+
+

@@ -1567,3 +1567,5 @@ class ConcurrentAutoTable implements Serializable {
  * @author Cliff Click
  */
 final class Counter extends ConcurrentAutoTable { }
+
+

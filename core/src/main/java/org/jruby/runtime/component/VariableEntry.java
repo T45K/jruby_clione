@@ -42,3 +42,5 @@ public class VariableEntry<BaseObjectType> implements Variable<BaseObjectType> {
         return "Name: " + getName();
     }
 }
+
+

@@ -64,3 +64,5 @@ public class SimpleCloneInfo extends CloneInfo {
         labelRenameMap.put(l, getScope().getNewLabel());
     }
 }
+
+

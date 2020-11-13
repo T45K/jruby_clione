@@ -25,3 +25,5 @@ public class ReceiveJRubyExceptionInstr extends ReceiveExceptionBase {
         visitor.ReceiveJRubyExceptionInstr(this);
     }
 }
+
+

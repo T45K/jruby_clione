@@ -53,3 +53,5 @@ final public class SafeDoubleParser extends SafeDecimalParser {
         return decimalValue(bigDecimal);
     }
 }
+
+

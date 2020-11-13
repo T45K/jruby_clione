@@ -398,3 +398,5 @@ public class RubyUNIXSocket extends RubyBasicSocket {
 
     protected final static int O_NONBLOCK = OpenFlags.O_NONBLOCK.intValue();
 }
+
+

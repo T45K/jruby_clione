@@ -59,3 +59,5 @@ public class ClosureLocalVariable extends LocalVariable {
         return name + "(" + scopeDepth + ":" + offset + ":local=" + !isOuterScopeVar() + ")";
     }
 }
+
+

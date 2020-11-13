@@ -442,3 +442,5 @@ public class RipperParserBase {
     // Is the parser current within a singleton (value is number of nested singletons)
     protected int inSingleton;
 }
+
+

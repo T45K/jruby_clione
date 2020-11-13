@@ -176,3 +176,5 @@ public abstract class AbstractIRMethod extends DynamicMethod implements IRMethod
         return !(irScope instanceof IRMethod && !irScope.getInterpreterContext().getFlags().contains(IRFlags.REQUIRES_CLASS));
     }
 }
+
+

@@ -5305,3 +5305,5 @@ public class RubyIO extends RubyObject implements IOEncodable, Closeable, Flusha
      */
     protected boolean popenSpecial;
 }
+
+

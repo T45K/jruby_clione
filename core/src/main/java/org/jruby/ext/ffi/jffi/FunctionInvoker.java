@@ -14,3 +14,5 @@ interface FunctionInvoker {
 
     IRubyObject invoke(ThreadContext context, Function function, HeapInvocationBuffer args);
 }
+
+

@@ -3277,3 +3277,5 @@ public class RubyBasicObject implements Cloneable, IRubyObject, Serializable, Co
     @Deprecated
     public static final int COMPARE_BY_IDENTITY_F = USER8_F;
 }
+
+

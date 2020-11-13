@@ -57,3 +57,5 @@ public class ClassDefiningJRubyClassLoader extends URLClassLoader implements Cla
         return super.defineClass(name, bytes, 0, bytes.length, domain);
     }
 }
+
+

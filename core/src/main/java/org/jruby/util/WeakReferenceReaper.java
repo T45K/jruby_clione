@@ -34,3 +34,4 @@ public abstract class WeakReferenceReaper<T> extends java.lang.ref.WeakReference
         super(referent, ReferenceReaper.getInstance().referenceQueue);
     }
 }
+

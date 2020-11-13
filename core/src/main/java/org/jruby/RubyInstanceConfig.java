@@ -2061,3 +2061,5 @@ public class RubyInstanceConfig {
     @Deprecated
     public static final boolean CAN_SET_ACCESSIBLE = Options.JI_SETACCESSIBLE.load();
 }
+
+

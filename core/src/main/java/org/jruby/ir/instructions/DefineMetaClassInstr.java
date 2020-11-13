@@ -81,3 +81,5 @@ public class DefineMetaClassInstr extends OneOperandResultBaseInstr implements F
         visitor.DefineMetaClassInstr(this);
     }
 }
+
+

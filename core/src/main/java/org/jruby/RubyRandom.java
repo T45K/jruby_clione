@@ -774,3 +774,5 @@ public class RubyRandom extends RubyObject {
         this.random = random;
     }
 }
+
+

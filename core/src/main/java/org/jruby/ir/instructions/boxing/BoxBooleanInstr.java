@@ -22,3 +22,5 @@ public class BoxBooleanInstr extends BoxInstr {
         visitor.BoxBooleanInstr(this);
     }
 }
+
+

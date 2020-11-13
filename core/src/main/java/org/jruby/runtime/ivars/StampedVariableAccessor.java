@@ -159,3 +159,5 @@ public class StampedVariableAccessor extends VariableAccessor {
         return self.varTableStamp == currentStamp;
     }
 }
+
+

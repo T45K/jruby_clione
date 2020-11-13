@@ -141,3 +141,5 @@ public class OptimizeDynScopesPass extends CompilerPass {
         return false;
     }
 }
+
+

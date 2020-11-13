@@ -28,3 +28,5 @@ public abstract class MultipleAsgnBase extends OneOperandResultBaseInstr {
         return index;
     }
 }
+
+

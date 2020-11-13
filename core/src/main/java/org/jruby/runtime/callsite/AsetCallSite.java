@@ -19,3 +19,5 @@ public class AsetCallSite extends MonomorphicCallSite {
         return super.call(context, caller, self, arg0, arg1);
     }
 }
+
+

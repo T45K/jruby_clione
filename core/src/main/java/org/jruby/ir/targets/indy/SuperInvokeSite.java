@@ -79,3 +79,4 @@ public abstract class SuperInvokeSite extends SelfInvokeSite {
 
     public abstract IRubyObject fail(ThreadContext context, IRubyObject caller, IRubyObject self, RubyClass definingModule, IRubyObject[] args, Block block) throws Throwable;
 }
+

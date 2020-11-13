@@ -46,3 +46,5 @@ public class TwoOperandArgNoBlockCallInstr  extends CallInstr  {
         return getCallSite().call(context, self, object, arg1, arg2);
     }
 }
+
+

@@ -150,3 +150,5 @@ public class FrozenString extends ImmutableLiteral<RubyString> implements String
         return true;
     }
 }
+
+

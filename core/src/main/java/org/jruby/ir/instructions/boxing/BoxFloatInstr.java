@@ -22,3 +22,5 @@ public class BoxFloatInstr extends BoxInstr {
         visitor.BoxFloatInstr(this);
     }
 }
+
+

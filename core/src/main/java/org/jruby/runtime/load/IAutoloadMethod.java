@@ -39,3 +39,5 @@ public interface IAutoloadMethod {
     public String file();
     public void load(Ruby runtime);
 }
+
+

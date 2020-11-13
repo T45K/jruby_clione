@@ -566,3 +566,4 @@ public class RubyArithmeticSequence extends RubyObject {
         return len;
     }
 }
+

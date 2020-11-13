@@ -127,3 +127,5 @@ public class RubyClassPathVariable extends RubyObject {
         return callMethod(context, "to_a").callMethod(context, "inspect");
     }
 }// RubyClassPathVariable
+
+

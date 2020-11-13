@@ -184,3 +184,4 @@ public class JRubyScriptEngineManager {
         extensionMap.put(extension, factory);
     }
 }
+

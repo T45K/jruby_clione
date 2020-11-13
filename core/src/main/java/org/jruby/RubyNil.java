@@ -278,3 +278,5 @@ public class RubyNil extends RubyObject implements Constantizable {
     @Deprecated
     public static final ObjectAllocator NIL_ALLOCATOR = ObjectAllocator.NOT_ALLOCATABLE_ALLOCATOR;
 }
+
+

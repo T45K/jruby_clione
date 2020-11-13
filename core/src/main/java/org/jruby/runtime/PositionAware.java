@@ -20,3 +20,5 @@ public interface PositionAware {
      */
     public int getLine();
 }
+
+

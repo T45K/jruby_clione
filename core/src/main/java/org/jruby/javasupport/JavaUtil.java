@@ -1670,3 +1670,5 @@ public class JavaUtil {
     @Deprecated
     public static final boolean CAN_SET_ACCESSIBLE = true;
 }
+
+

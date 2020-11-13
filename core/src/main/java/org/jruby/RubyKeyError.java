@@ -123,3 +123,4 @@ public class RubyKeyError extends RubyIndexError {
         return key;
     }
 }
+

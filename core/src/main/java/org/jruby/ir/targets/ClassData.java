@@ -104,3 +104,5 @@ public class ClassData {
     public final IntHashMap<Void> hashMethodsDefined = new IntHashMap<>(4, 1); // Set<int>
     public final IntHashMap<Void> kwargsHashMethodsDefined = new IntHashMap<>(4, 1); // Set<int>
 }
+
+

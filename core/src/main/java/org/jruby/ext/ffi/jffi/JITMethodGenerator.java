@@ -9,3 +9,5 @@ public interface JITMethodGenerator {
 
     public void generate(AsmClassBuilder builder, String functionName, JITSignature signature);
 }
+
+

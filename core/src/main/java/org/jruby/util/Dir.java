@@ -920,3 +920,5 @@ public class Dir {
         return new FilenameMatch(pat, 0, flags).helper(_pat, pend, new byte[] {(byte) test}, 1, ASCIIEncoding.INSTANCE);
     }
 }
+
+

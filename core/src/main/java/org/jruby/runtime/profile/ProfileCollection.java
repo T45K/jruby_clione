@@ -50,3 +50,5 @@ public interface ProfileCollection {
      */
     public void profileExit( long callingMethod, long startTime );
 }
+
+

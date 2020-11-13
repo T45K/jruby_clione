@@ -58,3 +58,5 @@ public final class SafeFloatParser extends SafeDecimalParser {
         return Float.valueOf((float)decimalValue(bigDecimal));
     }
 }
+
+

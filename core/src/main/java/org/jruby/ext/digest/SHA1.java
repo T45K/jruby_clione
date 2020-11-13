@@ -39,3 +39,5 @@ public class SHA1 implements Library {
         org.jruby.ext.digest.RubyDigest.createDigestSHA1(runtime);
     }
 }
+
+

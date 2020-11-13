@@ -56,3 +56,5 @@ public interface EmbedEvalUnit extends JavaEmbedUtils.EvalUnit {
      */
     public ManyVarsDynamicScope getScope();
 }
+
+

@@ -105,3 +105,5 @@ public class IRWriter {
         return RubyInstanceConfig.IR_WRITING_DEBUG && !encoder.isAnalyzer();
     }
 }
+
+

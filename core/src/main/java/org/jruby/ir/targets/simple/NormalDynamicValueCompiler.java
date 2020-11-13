@@ -135,3 +135,5 @@ public class NormalDynamicValueCompiler implements DynamicValueCompiler {
         compiler.adapter.invokestatic(classData.clsName, methodName, incomingSig);
     }
 }
+
+

@@ -204,3 +204,5 @@ public class DefinedVariableNode extends FlowGraphNode<DefinedVariablesProblem, 
     private BitSet tmp;     // Temporary state while applying transfer function
     private int setSize;    // Size of the "this.in" and "this.out" bit sets
 }
+
+

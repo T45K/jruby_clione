@@ -72,3 +72,5 @@ public class SetCapturedVarInstr extends OneOperandResultBaseInstr implements Fi
         visitor.SetCapturedVarInstr(this);
     }
 }
+
+

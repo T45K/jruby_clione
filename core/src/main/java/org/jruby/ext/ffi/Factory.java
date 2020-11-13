@@ -193,3 +193,5 @@ public abstract class Factory {
     public abstract int sizeOf(NativeType type);
     public abstract int alignmentOf(NativeType type);
 }
+
+

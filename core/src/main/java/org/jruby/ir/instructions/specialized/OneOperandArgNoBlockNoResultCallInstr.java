@@ -41,3 +41,5 @@ public class OneOperandArgNoBlockNoResultCallInstr extends NoResultCallInstr {
         return getCallSite().call(context, self, object, arg1);
     }
 }
+
+

@@ -6,3 +6,5 @@ abstract public interface AllocatedDirectMemoryIO {
     public void setAutoRelease(boolean autorelease);
     public boolean isAutoRelease();
 }
+
+

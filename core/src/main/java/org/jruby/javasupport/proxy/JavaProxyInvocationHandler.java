@@ -53,3 +53,4 @@ public interface JavaProxyInvocationHandler {
      */
     Object invoke(Object receiver, JavaProxyMethod method, Object[] args) throws Throwable;
 }
+

@@ -515,3 +515,5 @@ public class RubyException extends RubyObject {
         return newException(context, exceptionClass, message.convertToString());
     }
 }
+
+

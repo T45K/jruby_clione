@@ -330,3 +330,5 @@ public class RubyZlib {
         return RubyNumeric.fix2int(obj);
     }
 }
+
+

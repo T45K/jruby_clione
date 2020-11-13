@@ -600,3 +600,5 @@ public class RubyNKF {
     @Deprecated
     public static final NKFCharset MIME_DETECT = NKFCharset.MIME_DETECT;
 }
+
+

@@ -38,3 +38,5 @@ package org.jruby;
 public interface Finalizable {
     public void finalize() throws Throwable;
 }
+
+

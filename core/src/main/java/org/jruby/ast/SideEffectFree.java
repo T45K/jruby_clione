@@ -5,3 +5,5 @@ package org.jruby.ast;
  */
 public interface SideEffectFree {
 }
+
+

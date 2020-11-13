@@ -51,3 +51,5 @@ public class RubyFloatDomainError extends RubyRangeError {
         return new FloatDomainError(message, this);
     }
 }
+
+

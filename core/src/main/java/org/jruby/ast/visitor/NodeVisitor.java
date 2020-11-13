@@ -152,3 +152,5 @@ public interface NodeVisitor<T> {
     @Deprecated
     default T visitClassVarDeclNode(ClassVarDeclNode iVisited) { return null; }
 }
+
+

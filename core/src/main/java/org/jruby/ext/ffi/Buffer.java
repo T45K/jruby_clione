@@ -204,3 +204,5 @@ public final class Buffer extends AbstractMemory {
         return Factory.getInstance().allocateTransientDirectMemory(runtime, size, 8, true);
     }
 }
+
+

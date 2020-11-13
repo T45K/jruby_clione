@@ -44,3 +44,4 @@ public interface BlockAcceptingNode {
     
     public Node setIterNode(Node iterNode);
 }
+

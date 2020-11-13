@@ -396,3 +396,5 @@ public class JZlibRubyGzipWriter extends RubyGzipFile {
     
     private GZIPOutputStream io;
 }
+
+

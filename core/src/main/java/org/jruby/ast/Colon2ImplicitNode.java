@@ -42,3 +42,5 @@ public class Colon2ImplicitNode extends Colon2Node {
         super(position, null, name);
     }
 }
+
+

@@ -453,3 +453,5 @@ public interface EmbedRubyInstanceConfigAdapter {
     @Deprecated
     public void setCompatVersion(org.jruby.CompatVersion version);
 }
+
+

@@ -176,3 +176,5 @@ public class ClassVariable extends AbstractVariable {
         rubyClass.removeClassVariable(name);
     }
 }
+
+

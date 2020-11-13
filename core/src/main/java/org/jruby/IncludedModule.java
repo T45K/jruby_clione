@@ -66,3 +66,4 @@ public class IncludedModule extends RubyClass {
     /** The module to which this include origins. */
     protected final RubyModule origin;
 }
+

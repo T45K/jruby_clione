@@ -367,3 +367,5 @@ public final class IdUtil {
         return (globalNamePunctuationBits[(c - 0x20) / 32] >> (c % 32) & 1) != 0;
     }
 }
+
+

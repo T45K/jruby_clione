@@ -34,3 +34,4 @@ public abstract class SoftReferenceReaper<T> extends java.lang.ref.SoftReference
         super(referent, ReferenceReaper.getInstance().referenceQueue);
     }
 }
+

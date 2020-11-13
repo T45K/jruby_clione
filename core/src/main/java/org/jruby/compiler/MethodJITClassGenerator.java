@@ -80,3 +80,5 @@ public class MethodJITClassGenerator extends JITClassGenerator {
     }
     private final AbstractIRMethod method;
 }
+
+

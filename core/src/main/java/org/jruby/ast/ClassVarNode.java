@@ -74,3 +74,5 @@ public class ClassVarNode extends Node implements INameNode, SideEffectFree {
         return EMPTY_LIST;
     }
 }
+
+

@@ -19,3 +19,5 @@ public class Colon2ConstNode extends Colon2Node {
         assert leftNode != null: "Colon2ConstNode cannot have null leftNode";
     }
 }
+
+

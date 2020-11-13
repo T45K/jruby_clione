@@ -149,3 +149,5 @@ public class PersistentLocalVariable extends AbstractVariable {
         // FIXME: Code originally here did not appear to actually do anything, so it was removed.
     }
 }
+
+

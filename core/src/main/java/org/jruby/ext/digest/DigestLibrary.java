@@ -41,3 +41,5 @@ public class DigestLibrary implements Library {
         org.jruby.ext.digest.RubyDigest.createDigest(runtime);
     }
 }// DigestLibrary
+
+

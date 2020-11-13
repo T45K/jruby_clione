@@ -41,3 +41,5 @@ public class BignumObjectSite extends LazyObjectSite {
         return RubyBignum.newBignum(context.runtime, value);
     }
 }
+
+

@@ -68,3 +68,5 @@ public final class StringParameterStrategy extends PointerParameterStrategy {
         return ((RubyString) parameter).getByteList().length();
     }
 }
+
+

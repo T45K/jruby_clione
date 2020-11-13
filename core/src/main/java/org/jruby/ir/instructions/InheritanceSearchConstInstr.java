@@ -87,3 +87,5 @@ public class InheritanceSearchConstInstr extends OneOperandResultBaseInstr imple
         visitor.InheritanceSearchConstInstr(this);
     }
 }
+
+

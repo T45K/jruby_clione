@@ -55,3 +55,5 @@ public class GetEncodingInstr extends NoOperandResultBaseInstr implements FixedA
         visitor.GetEncodingInstr(this);
     }
 }
+
+

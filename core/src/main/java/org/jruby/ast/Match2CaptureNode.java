@@ -17,3 +17,5 @@ public class Match2CaptureNode extends Match2Node {
         return scopeOffsets;
     }
 }
+
+

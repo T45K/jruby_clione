@@ -32,3 +32,5 @@ public abstract class ReceiveArgBase extends NoOperandResultBaseInstr {
         throw new RuntimeException("ReceiveArgBase.interpret called! " + this.getClass().getName() + " does not define receiveArg");
     }
 }
+
+

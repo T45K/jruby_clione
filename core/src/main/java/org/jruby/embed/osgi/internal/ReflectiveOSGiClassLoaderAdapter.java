@@ -45,3 +45,5 @@ public class ReflectiveOSGiClassLoaderAdapter implements IOSGiClassLoaderAdapter
         return OSGiBundleClassLoaderHelper.getBundleClassLoader(bundle);
     }
 }
+
+

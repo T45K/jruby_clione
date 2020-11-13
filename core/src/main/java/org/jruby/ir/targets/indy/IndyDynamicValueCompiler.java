@@ -47,3 +47,5 @@ public class IndyDynamicValueCompiler implements DynamicValueCompiler {
         compiler.adapter.invokedynamic("hash", sig(JVM.OBJECT, params(ThreadContext.class, JVM.OBJECT, length * 2)), Bootstrap.hash());
     }
 }
+
+

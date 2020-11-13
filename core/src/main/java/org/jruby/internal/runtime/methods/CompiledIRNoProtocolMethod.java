@@ -97,3 +97,5 @@ public class CompiledIRNoProtocolMethod extends AbstractIRMethod {
         // no-op
     }
 }
+
+

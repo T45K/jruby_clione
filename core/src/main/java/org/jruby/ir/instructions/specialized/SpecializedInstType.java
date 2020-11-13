@@ -4,3 +4,5 @@ public enum SpecializedInstType {
     ONE_OPERAND, ONE_FIXNUM, ZERO_OPERAND;
 }
 
+
+

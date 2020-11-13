@@ -47,3 +47,5 @@ public interface CoreObjectType {
      */
     ClassIndex getNativeClassIndex();
 }
+
+

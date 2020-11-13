@@ -133,3 +133,5 @@ public class InstanceVariableFinder extends AbstractNodeVisitor<Void> {
         return null;
     }
 }
+
+

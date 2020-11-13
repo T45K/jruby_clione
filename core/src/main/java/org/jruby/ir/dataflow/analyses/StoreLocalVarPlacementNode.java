@@ -342,3 +342,5 @@ public class StoreLocalVarPlacementNode extends FlowGraphNode<StoreLocalVarPlace
     Set<LocalVariable> outDirtyVars;  // On exit from flow graph node: Variables that need to be stored to the heap binding
     Set<LocalVariable> dirtyVars;     // Temporary state while applying transfer function
 }
+
+

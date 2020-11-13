@@ -70,3 +70,5 @@ public class OpAsgnConstDeclNode extends Node implements BinaryOperatorNode {
         return NodeType.OPASGNCONSTDECLNODE;
     }
 }
+
+

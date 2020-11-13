@@ -69,3 +69,5 @@ public class GetGlobalVariableInstr extends OneOperandResultBaseInstr  implement
         visitor.GetGlobalVariableInstr(this);
     }
 }
+
+

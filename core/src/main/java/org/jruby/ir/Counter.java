@@ -5,3 +5,5 @@ package org.jruby.ir;
 public class Counter {
     public long count = 0;
 }
+
+

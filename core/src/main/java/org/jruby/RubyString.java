@@ -6946,3 +6946,5 @@ public class RubyString extends RubyObject implements CharSequence, EncodingCapa
     public IRubyObject scan19(ThreadContext context, IRubyObject arg, Block block) { return scan(context, arg, block); }
 
 }
+
+

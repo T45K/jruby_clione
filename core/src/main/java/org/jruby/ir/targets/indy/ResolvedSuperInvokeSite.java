@@ -95,3 +95,4 @@ public abstract class ResolvedSuperInvokeSite extends SelfInvokeSite {
 
     protected abstract RubyClass getSuperClass(RubyClass definingModule);
 }
+

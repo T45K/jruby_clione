@@ -30,3 +30,5 @@ public class AutoPointer extends Pointer {
         super(runtime, klazz, runtime.getFFI().getNullMemoryIO());
     }
 }
+
+

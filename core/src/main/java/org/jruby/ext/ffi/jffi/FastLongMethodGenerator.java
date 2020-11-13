@@ -133,3 +133,5 @@ final class FastLongMethodGenerator extends AbstractNumericMethodGenerator {
         }
     }
 }
+
+

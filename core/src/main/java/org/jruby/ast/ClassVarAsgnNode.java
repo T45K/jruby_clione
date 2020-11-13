@@ -84,3 +84,5 @@ public class ClassVarAsgnNode extends AssignableNode implements INameNode {
         return false;
     }
 }
+
+

@@ -65,3 +65,4 @@ public class UriLikePathHelper {
         return "uri:" + url.toString().replaceFirst( ref + "$", "" );
     }
 }
+

@@ -38,3 +38,5 @@ public class SyntaxError extends ScriptError {
         super(message, exception);
     }
 }
+
+

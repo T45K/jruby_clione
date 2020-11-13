@@ -9,3 +9,5 @@ public interface JumpTargetInstr {
     Label getJumpTarget();
     void setJumpTarget(Label target);
 }
+
+

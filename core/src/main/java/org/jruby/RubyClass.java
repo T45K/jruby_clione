@@ -2494,3 +2494,5 @@ public class RubyClass extends RubyModule {
     /** Variable table manager for this class */
     private final VariableTableManager variableTableManager;
 }
+
+

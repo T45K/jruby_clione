@@ -21,3 +21,5 @@ public class IndyCheckpointCompiler implements CheckpointCompiler {
                 Bootstrap.checkpointHandle());
     }
 }
+
+

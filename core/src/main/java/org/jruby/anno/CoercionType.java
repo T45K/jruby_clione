@@ -33,3 +33,5 @@ package org.jruby.anno;
 public enum CoercionType {
     TO_STR, TO_S, TO_A, TO_I
 }
+
+

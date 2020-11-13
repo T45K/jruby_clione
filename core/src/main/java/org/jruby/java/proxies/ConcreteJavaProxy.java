@@ -236,3 +236,5 @@ public class ConcreteJavaProxy extends JavaProxy {
         throw getRuntime().newTypeError("failed to coerce " + clazz.getName() + " to " + type.getName());
     }
 }
+
+

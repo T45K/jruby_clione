@@ -2905,3 +2905,5 @@ public class RubyHash extends RubyObject implements Map {
         return rb_clear(getRuntime().getCurrentContext());
     }
 }
+
+

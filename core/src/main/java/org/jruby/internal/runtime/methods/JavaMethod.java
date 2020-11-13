@@ -1390,3 +1390,5 @@ public abstract class JavaMethod extends DynamicMethod implements Cloneable, Met
         this(implementationClass, visibility, NAME_PASSER.get());
     }
 }
+
+

@@ -20,3 +20,5 @@ public abstract class NoOperandResultBaseInstr extends ResultBaseInstr {
         throw new IllegalArgumentException("No such operand to set at index: " + i);
     }
 }
+
+

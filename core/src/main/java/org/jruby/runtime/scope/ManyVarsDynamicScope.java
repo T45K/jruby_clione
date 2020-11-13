@@ -297,3 +297,5 @@ public class ManyVarsDynamicScope extends DynamicScope {
         return new ManyVarsDynamicScope(staticScope, parent);
     }
 }
+
+

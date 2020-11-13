@@ -37,3 +37,5 @@ import org.jruby.RubyClass;
 public interface RubyJavaObject {
     public RubyClass getMetaClass();
 }
+
+

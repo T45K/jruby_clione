@@ -201,3 +201,5 @@ public abstract class JavaSupport {
      */
     public abstract RubyModule getUnfinishedProxy(Class cls);
 }
+
+

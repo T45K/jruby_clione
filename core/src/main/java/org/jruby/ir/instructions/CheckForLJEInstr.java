@@ -78,3 +78,5 @@ public class CheckForLJEInstr extends NoOperandInstr {
         return true;
     }
 }
+
+

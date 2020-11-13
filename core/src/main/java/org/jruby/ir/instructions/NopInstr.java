@@ -31,3 +31,5 @@ public class NopInstr extends NoOperandInstr implements FixedArityInstr {
         visitor.NopInstr(this);
     }
 }
+
+

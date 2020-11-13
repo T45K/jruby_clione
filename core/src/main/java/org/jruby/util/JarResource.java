@@ -204,3 +204,5 @@ abstract class JarResource implements FileResource, DummyResourceStat.FileResour
     }
 
 }
+
+

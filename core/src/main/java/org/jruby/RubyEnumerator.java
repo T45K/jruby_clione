@@ -668,3 +668,5 @@ public class RubyEnumerator extends RubyObject implements java.util.Iterator<Obj
         return RubyChain.newChain(context, new IRubyObject[] {this, obj});
     }
 }
+
+

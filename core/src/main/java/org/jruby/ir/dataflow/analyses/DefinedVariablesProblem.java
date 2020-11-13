@@ -61,3 +61,5 @@ public class DefinedVariablesProblem extends DataFlowProblem<DefinedVariablesPro
     private final HashMap<Integer, Variable> varDfVarMap = new HashMap<Integer, Variable>();
     private final HashSet<Variable> vars = new HashSet<Variable>();
 }
+
+

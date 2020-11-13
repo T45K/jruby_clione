@@ -7,3 +7,5 @@ public interface ParseResult {
     int getLine();
     String getFile();
 }
+
+

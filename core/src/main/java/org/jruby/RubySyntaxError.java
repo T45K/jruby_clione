@@ -52,3 +52,5 @@ public class RubySyntaxError extends RubyScriptError {
         return new SyntaxError(message, this);
     }
 }
+
+

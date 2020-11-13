@@ -69,3 +69,5 @@ public interface ProfilingService {
      */
     public void addProfiledMethod(String name, DynamicMethod method);
 }
+
+

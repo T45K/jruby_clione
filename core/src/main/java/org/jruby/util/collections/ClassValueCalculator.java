@@ -6,3 +6,5 @@ package org.jruby.util.collections;
 public interface ClassValueCalculator<T> {
     public T computeValue(Class<?> cls);
 }
+
+

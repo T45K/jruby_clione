@@ -18,3 +18,5 @@ public class NilImplicitNode extends NilNode implements InvisibleNode {
         return true;
     }
 }
+
+

@@ -51,3 +51,5 @@ public class RubyInterruptedRegexpError extends RubyRegexpError {
         return new InterruptedRegexpError(message, this);
     }
 }
+
+

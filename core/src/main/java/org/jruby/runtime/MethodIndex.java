@@ -288,3 +288,5 @@ public class MethodIndex {
         SCOPE_AWARE_METHODS.addAll(Arrays.asList(methods));
     }
 }
+
+

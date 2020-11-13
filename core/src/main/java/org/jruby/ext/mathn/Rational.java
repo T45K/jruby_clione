@@ -35,3 +35,4 @@ public class Rational implements Library {
         RubyRational.setCanonicalization(true);
     }
 }
+

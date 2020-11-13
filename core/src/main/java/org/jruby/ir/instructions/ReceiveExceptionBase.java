@@ -10,3 +10,5 @@ public abstract class ReceiveExceptionBase extends NoOperandResultBaseInstr impl
         assert result != null : "ResultExceptionInstr result is null";
     }
 }
+
+

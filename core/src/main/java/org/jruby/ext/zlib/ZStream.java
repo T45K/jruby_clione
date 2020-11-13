@@ -216,3 +216,4 @@ public abstract class ZStream extends RubyObject {
         }
     }
 }
+

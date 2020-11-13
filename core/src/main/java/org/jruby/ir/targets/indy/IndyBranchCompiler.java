@@ -39,3 +39,5 @@ public class IndyBranchCompiler implements BranchCompiler {
         normalCompiler.btrue(label);
     }
 }
+
+

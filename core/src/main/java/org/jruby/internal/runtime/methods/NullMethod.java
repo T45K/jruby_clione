@@ -127,3 +127,5 @@ public class NullMethod extends DynamicMethod {
         return true;
     }
 }
+
+

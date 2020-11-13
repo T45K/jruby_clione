@@ -14,3 +14,5 @@ public interface RubyRuntimeAdapter {
     EvalUnit parse(Ruby runtime, String script, String filename, int lineNumber);
     EvalUnit parse(Ruby runtime, InputStream in, String filename, int lineNumber);
 }
+
+

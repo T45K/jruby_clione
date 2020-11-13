@@ -112,3 +112,5 @@ public abstract class JRubyExecutionContextLocal extends RubyObject {
     protected abstract ExecutionContext getExecutionContext(ThreadContext context);
     
 }
+
+

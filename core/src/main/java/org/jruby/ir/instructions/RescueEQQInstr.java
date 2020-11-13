@@ -63,3 +63,5 @@ public class RescueEQQInstr extends TwoOperandResultBaseInstr implements FixedAr
         visitor.RescueEQQInstr(this);
     }
 }
+
+

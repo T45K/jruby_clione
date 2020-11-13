@@ -37,3 +37,5 @@ public class FrozenError extends RuntimeError {
         super(message, exception);
     }
 }
+
+

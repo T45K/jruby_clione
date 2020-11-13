@@ -36,3 +36,5 @@ public class BNilInstr extends OneOperandBranchInstr  implements FixedArityInstr
         return value1 == context.nil ? getJumpTarget().getTargetPC() : ipc;
     }
 }
+
+

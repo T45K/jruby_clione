@@ -6,3 +6,4 @@
  */
 @Deprecated
 package org.jruby.runtime.profile.builtin;
+

@@ -54,3 +54,5 @@ public class NormalConstantCompiler implements ConstantCompiler {
         compiler.adapter.invokevirtual(p(ConstantLookupSite.class), "lexicalSearchConst", sig(JVM.OBJECT, params(ThreadContext.class, StaticScope.class)));
     }
 }
+
+

@@ -78,3 +78,5 @@ public class NoResultCallInstr extends CallBase {
         visitor.NoResultCallInstr(this);
     }
 }
+
+

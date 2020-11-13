@@ -79,3 +79,5 @@ public class AttrAssignInstr extends NoResultCallInstr {
         visitor.AttrAssignInstr(this);
     }
 }
+
+

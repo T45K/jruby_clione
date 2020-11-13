@@ -853,3 +853,4 @@ public class RubyArgsFile extends RubyObject {
         return context.sites.Argf;
     }
 }
+

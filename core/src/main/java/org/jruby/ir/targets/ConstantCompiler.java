@@ -45,3 +45,5 @@ public interface ConstantCompiler {
      */
     void lexicalSearchConst(String id, ByteList name);
 }
+
+

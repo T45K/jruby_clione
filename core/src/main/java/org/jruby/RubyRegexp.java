@@ -1833,3 +1833,5 @@ public class RubyRegexp extends RubyObject implements ReOptions, EncodingCapable
         output.writeByte(options);
     }
 }
+
+

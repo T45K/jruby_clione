@@ -7,3 +7,5 @@ package org.jruby.runtime.marshal;
  */
 public interface DataType {
 }
+
+

@@ -56,3 +56,5 @@ public class RubyArgumentError extends RubyStandardError {
         return new ArgumentError(message, this);
     }
 }
+
+

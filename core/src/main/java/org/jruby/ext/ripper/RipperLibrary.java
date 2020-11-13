@@ -46,3 +46,5 @@ public class RipperLibrary implements Library {
         runtime.defineGlobalConstant("SCRIPT_LINES__", runtime.getNil());
     }
 }
+
+

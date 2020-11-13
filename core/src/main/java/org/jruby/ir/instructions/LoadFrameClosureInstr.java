@@ -59,3 +59,5 @@ public class LoadFrameClosureInstr extends NoOperandResultBaseInstr implements F
         visitor.LoadFrameClosure(this);
     }
 }
+
+

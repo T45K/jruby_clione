@@ -52,3 +52,5 @@ public class OneOperandArgBlockCallInstr extends CallInstr {
         return getCallSite().call(context, self, object, arg1, preparedBlock);
     }
 }
+
+

@@ -247,3 +247,5 @@ public class EmbedRubyRuntimeAdapterImpl implements EmbedRubyRuntimeAdapter {
         return adapter.parse(runtime, istream, filename, lineNumber);
     }
 }
+
+

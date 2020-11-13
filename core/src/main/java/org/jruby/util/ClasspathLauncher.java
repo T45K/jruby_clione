@@ -37,3 +37,4 @@ public class ClasspathLauncher {
         return jrubyCommand(runtime.getJRubyClassLoader().getParent());
     }
 }
+
