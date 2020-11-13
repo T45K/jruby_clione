@@ -239,3 +239,5 @@ public class JRubyClassLoader extends ClassDefiningJRubyClassLoader {
         return unloader;
     }
 }
+
+

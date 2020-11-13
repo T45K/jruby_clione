@@ -10,3 +10,5 @@ public abstract class BranchInstr extends Instr implements JumpTargetInstr {
 
     public abstract Label getJumpTarget();
 }
+
+

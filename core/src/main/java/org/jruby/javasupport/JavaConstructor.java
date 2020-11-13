@@ -345,3 +345,5 @@ public class JavaConstructor extends JavaCallable {
     boolean isConstructor() { return true; } // for error message in base class
 
 }
+
+

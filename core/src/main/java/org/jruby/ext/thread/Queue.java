@@ -609,3 +609,5 @@ public class Queue extends RubyObject implements DataType {
         return context.runtime.newThreadError("interrupted in " + getMetaClass().getName() + "#" + methodName);
     }
 }
+
+

@@ -51,3 +51,5 @@ public class RubyFrozenError extends RubyRuntimeError {
         return new FrozenError(message, this);
     }
 }
+
+

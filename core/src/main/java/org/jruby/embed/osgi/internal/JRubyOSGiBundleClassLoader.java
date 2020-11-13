@@ -240,3 +240,5 @@ public class JRubyOSGiBundleClassLoader extends ClassLoader implements BundleRef
     }
 
 }
+
+

@@ -56,3 +56,5 @@ public class RubyStandardError extends RubyException {
         return new StandardError(message, this);
     }
 }
+
+

@@ -39,3 +39,5 @@ public class ReceiveSelfInstr extends NoOperandResultBaseInstr implements FixedA
         visitor.ReceiveSelfInstr(this);
     }
 }
+
+

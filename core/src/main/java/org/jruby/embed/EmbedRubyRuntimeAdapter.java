@@ -94,3 +94,5 @@ public interface EmbedRubyRuntimeAdapter extends RubyRuntimeAdapter {
      */
     EmbedEvalUnit parse(InputStream istream, String filename, int... lines);
 }
+
+

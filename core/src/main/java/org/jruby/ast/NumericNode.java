@@ -16,3 +16,5 @@ public abstract class NumericNode extends Node implements ILiteralNode {
         throw new IllegalArgumentException("Unexpected negation of a numeric type");
     }
 }
+
+

@@ -236,3 +236,4 @@ public class InlineCloneInfo extends CloneInfo {
         return false;
     }
 }
+

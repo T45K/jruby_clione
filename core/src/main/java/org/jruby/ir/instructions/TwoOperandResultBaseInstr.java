@@ -51,3 +51,5 @@ public abstract class TwoOperandResultBaseInstr extends ResultBaseInstr {
         }
     }
 }
+
+

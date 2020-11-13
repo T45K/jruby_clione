@@ -25,3 +25,5 @@ public class IndyInstanceVariableCompiler implements InstanceVariableCompiler {
         compiler.adapter.invokedynamic("ivarGet:" + JavaNameMangler.mangleMethodName(name), CodegenUtils.sig(JVM.OBJECT, IRubyObject.class), VariableSite.IVAR_ASM_HANDLE);
     }
 }
+
+

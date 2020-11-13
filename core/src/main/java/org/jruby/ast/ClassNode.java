@@ -123,3 +123,5 @@ public class ClassNode extends Node implements IScopingNode {
         return true;
     }
 }
+
+

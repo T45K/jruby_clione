@@ -67,3 +67,5 @@ public class GetClassVarContainerModuleInstr extends NOperandResultBaseInstr imp
         visitor.GetClassVarContainerModuleInstr(this);
     }
 }
+
+

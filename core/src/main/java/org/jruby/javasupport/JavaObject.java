@@ -319,3 +319,5 @@ public class JavaObject extends RubyObject {
     };
 
 }
+
+

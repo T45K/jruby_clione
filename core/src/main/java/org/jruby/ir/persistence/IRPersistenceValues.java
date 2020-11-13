@@ -37,3 +37,5 @@ interface IRPersistenceValues {
     public final static int USASCII = -1;
     public final static int UTF8 = -2;
 }
+
+

@@ -59,3 +59,5 @@ public class NormalArgumentsCompiler implements ArgumentsCompiler {
         compiler.adapter.invokestatic(classData.clsName, methodName, incomingSig);
     }
 }
+
+

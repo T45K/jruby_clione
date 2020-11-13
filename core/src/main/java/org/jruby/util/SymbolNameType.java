@@ -10,3 +10,5 @@ package org.jruby.util;
 public enum SymbolNameType {
     GLOBAL, INSTANCE, JUNK, ATTRSET, CLASS, LOCAL, CONST, OTHER;
 }
+
+

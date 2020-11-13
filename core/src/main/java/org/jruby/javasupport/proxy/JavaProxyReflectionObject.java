@@ -162,3 +162,5 @@ public class JavaProxyReflectionObject extends RubyObject {
     }
 
 }
+
+

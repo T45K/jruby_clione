@@ -19,3 +19,5 @@ public class IRMetaClassBody extends IRClassBody {
         return false;
     }
 }
+
+

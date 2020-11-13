@@ -366,3 +366,5 @@ public class EmbedRubyObjectAdapterImpl implements EmbedRubyObjectAdapter {
         return null;
     }
 }
+
+

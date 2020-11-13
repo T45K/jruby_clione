@@ -53,3 +53,5 @@ public class OneFixnumArgNoBlockCallInstr extends CallInstr {
         return getCallSite().call(context, self, object, fixNum);
     }
 }
+
+

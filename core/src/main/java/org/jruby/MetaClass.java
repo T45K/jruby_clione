@@ -127,3 +127,5 @@ public final class MetaClass extends RubyClass {
     private static final boolean LOG_SINGLETONS_VERBOSE = Options.LOG_SINGLETONS_VERBOSE.load();
 
 }
+
+

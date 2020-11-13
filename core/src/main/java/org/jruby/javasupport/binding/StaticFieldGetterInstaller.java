@@ -19,3 +19,5 @@ public class StaticFieldGetterInstaller extends FieldInstaller {
         }
     }
 }
+
+

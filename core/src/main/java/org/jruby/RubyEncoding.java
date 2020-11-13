@@ -679,3 +679,5 @@ public class RubyEncoding extends RubyObject implements Constantizable {
         return decodeRaw(byteList);
     }
 }
+
+

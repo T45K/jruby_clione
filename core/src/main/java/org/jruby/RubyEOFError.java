@@ -51,3 +51,5 @@ public class RubyEOFError extends RubyIOError {
         return new EOFError(message, this);
     }
 }
+
+

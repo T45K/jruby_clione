@@ -29,3 +29,5 @@ public interface CompilerPassListener {
      */
     public void endExecute(CompilerPass pass, FullInterpreterContext fic, Object data, boolean childScope);
 }
+
+

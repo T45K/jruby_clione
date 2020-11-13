@@ -51,3 +51,5 @@ public class RubyZeroDivisionError extends RubyStandardError {
         return new ZeroDivisionError(message, this);
     }
 }
+
+

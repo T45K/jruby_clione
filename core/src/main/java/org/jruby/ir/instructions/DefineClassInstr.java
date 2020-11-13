@@ -111,3 +111,5 @@ public class DefineClassInstr extends TwoOperandResultBaseInstr implements Fixed
         visitor.DefineClassInstr(this);
     }
 }
+
+

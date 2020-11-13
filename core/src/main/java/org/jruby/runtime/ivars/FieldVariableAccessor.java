@@ -109,3 +109,5 @@ public class FieldVariableAccessor extends VariableAccessor {
             .cast(void.class, RubyBasicObject.class)
             .invokeVirtualQuiet(RubyObjectSpecializer.LOOKUP, "ensureInstanceVariablesSettable");
 }
+
+

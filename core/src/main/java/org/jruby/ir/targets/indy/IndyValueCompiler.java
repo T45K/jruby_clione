@@ -140,3 +140,5 @@ public class IndyValueCompiler implements ValueCompiler {
         normalValueCompiler.pushConstantLookupSite(className, siteName, name);
     }
 }
+
+

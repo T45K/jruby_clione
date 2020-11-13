@@ -51,3 +51,5 @@ public class RubyScriptError extends RubyException {
         return new ScriptError(message, this);
     }
 }
+
+

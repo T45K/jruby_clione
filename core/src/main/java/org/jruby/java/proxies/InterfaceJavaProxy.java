@@ -66,3 +66,5 @@ public class InterfaceJavaProxy extends JavaProxy {
         }
     }
 }
+
+

@@ -338,3 +338,5 @@ public class ConstantLookupSite extends MutableCallSite {
                 .invokeVirtualQuiet(Bootstrap.LOOKUP, "noCacheInheritanceSearchConst");
     }
 }
+
+

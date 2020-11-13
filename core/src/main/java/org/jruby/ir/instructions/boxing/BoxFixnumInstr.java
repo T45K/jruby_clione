@@ -22,3 +22,5 @@ public class BoxFixnumInstr extends BoxInstr {
         visitor.BoxFixnumInstr(this);
     }
 }
+
+

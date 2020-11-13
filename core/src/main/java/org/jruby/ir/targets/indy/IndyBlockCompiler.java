@@ -52,3 +52,5 @@ public class IndyBlockCompiler implements BlockCompiler {
                 Bootstrap.prepareBlock(), handle, scopeHandle, setScopeHandle, parentScopeHandle, scopeDescriptor, encodedSignature, file, line, encodedArgumentDescriptors);
     }
 }
+
+

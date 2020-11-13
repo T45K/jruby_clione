@@ -728,3 +728,5 @@ public class JavaProxyClass extends JavaProxyReflectionObject {
         return "[Proxy:" + getSuperclass().getName() + ']';
     }
 }
+
+

@@ -40,3 +40,5 @@ import java.lang.annotation.Target;
 public @interface JRubyConstant {
     String[] value() default {};
 }
+
+

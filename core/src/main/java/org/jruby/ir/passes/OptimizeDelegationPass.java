@@ -93,3 +93,5 @@ public class OptimizeDelegationPass extends CompilerPass {
                  v != ((ClosureAcceptingInstr) i).getClosureArg());
     }
 }
+
+

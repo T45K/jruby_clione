@@ -93,3 +93,5 @@ public abstract class MethodFactory {
      */
     public abstract DynamicMethod getAnnotatedMethod(RubyModule implementationClass, JavaMethodDescriptor desc, String name);
 }
+
+

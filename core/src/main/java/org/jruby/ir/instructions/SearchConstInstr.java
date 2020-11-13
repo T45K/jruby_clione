@@ -89,3 +89,5 @@ public class SearchConstInstr extends OneOperandResultBaseInstr implements Fixed
         visitor.SearchConstInstr(this);
     }
 }
+
+

@@ -61,3 +61,5 @@ public interface Logger {
     public void setDebugEnable(boolean debug);
 
 }
+
+

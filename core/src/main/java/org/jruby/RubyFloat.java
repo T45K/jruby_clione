@@ -1241,3 +1241,5 @@ public class RubyFloat extends RubyNumeric {
         return context.sites.Float;
     }
 }
+
+

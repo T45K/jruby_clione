@@ -33,3 +33,5 @@ import org.jruby.RubySymbol;
 public interface INameNode {
     RubySymbol getName();
 }
+
+

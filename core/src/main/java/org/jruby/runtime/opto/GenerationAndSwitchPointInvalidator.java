@@ -36,3 +36,5 @@ public class GenerationAndSwitchPointInvalidator implements Invalidator {
         return switchPointInvalidator.getData();
     }
 }
+
+

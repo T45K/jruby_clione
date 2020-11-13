@@ -1948,3 +1948,5 @@ public class ScriptingContainer implements EmbedRubyInstanceConfigAdapter {
     public void setCompatVersion(org.jruby.CompatVersion version) {
     }
 }
+
+

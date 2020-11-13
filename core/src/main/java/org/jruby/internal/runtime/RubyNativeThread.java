@@ -148,3 +148,5 @@ public class RubyNativeThread implements ThreadLike {
         try { thread.setName(newName); } catch (SecurityException ignore) { } // current thread can not modify
     }
 }
+
+

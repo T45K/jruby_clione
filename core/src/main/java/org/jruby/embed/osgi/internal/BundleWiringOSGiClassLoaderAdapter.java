@@ -51,3 +51,5 @@ public class BundleWiringOSGiClassLoaderAdapter implements IOSGiClassLoaderAdapt
         return wiring.getClassLoader();
     }
 }
+
+

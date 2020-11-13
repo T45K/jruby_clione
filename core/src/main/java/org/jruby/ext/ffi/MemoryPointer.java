@@ -150,3 +150,5 @@ public class MemoryPointer extends Pointer {
         return RubyBoolean.newBoolean(context, ((AllocatedDirectMemoryIO) getMemoryIO()).isAutoRelease());
     }
 }
+
+

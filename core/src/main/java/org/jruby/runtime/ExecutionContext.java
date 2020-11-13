@@ -36,3 +36,5 @@ import org.jruby.runtime.builtin.IRubyObject;
 public interface ExecutionContext {
     public Map<Object, IRubyObject> getContextVariables();
 }
+
+

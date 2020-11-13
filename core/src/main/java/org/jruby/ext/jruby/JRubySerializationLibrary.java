@@ -9,3 +9,4 @@ public class JRubySerializationLibrary implements Library {
         JRubyObjectInputStream.createJRubyObjectInputStream(runtime);
     }
 }
+

@@ -35,3 +35,5 @@ public interface RubyObjectAdapter {
 
     IRubyObject callSuper(IRubyObject receiver, IRubyObject[] args, Block block);
 }
+
+

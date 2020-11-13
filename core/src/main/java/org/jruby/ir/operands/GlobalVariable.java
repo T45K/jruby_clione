@@ -41,3 +41,5 @@ public class GlobalVariable extends Reference {
         visitor.GlobalVariable(this);
     }
 }
+
+

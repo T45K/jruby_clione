@@ -61,3 +61,5 @@ public class TemporaryBooleanVariable extends TemporaryLocalVariable {
         visitor.TemporaryBooleanVariable(this);
     }
 }
+
+

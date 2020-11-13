@@ -19,3 +19,5 @@ public class IRClassBody extends IRModuleBody {
         return true;
     }
 }
+
+

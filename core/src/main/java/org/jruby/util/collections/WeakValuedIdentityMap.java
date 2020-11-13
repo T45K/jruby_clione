@@ -44,3 +44,5 @@ public class WeakValuedIdentityMap<Key, Value> extends WeakValuedMap<Key, Value>
         return Collections.synchronizedMap( new IdentityHashMap<Key, KeyedReference<Key, Value>>() );
     }
 }
+
+

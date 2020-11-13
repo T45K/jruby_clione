@@ -37,3 +37,5 @@ public interface IScopingNode {
     StaticScope getScope();
     Node getBodyNode();
 }
+
+

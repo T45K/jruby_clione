@@ -65,3 +65,5 @@ public class DefineInstanceMethodInstr extends NoOperandInstr implements FixedAr
         visitor.DefineInstanceMethodInstr(this);
     }
 }
+
+

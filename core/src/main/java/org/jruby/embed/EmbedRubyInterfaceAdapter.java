@@ -45,3 +45,5 @@ public interface EmbedRubyInterfaceAdapter {
      */
     public <T> T getInstance(Object receiver, Class<T> clazz);
 }
+
+

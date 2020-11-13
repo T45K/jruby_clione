@@ -52,3 +52,5 @@ public class RubyLoadError extends RubyScriptError {
         return new LoadError(message, this);
     }
 }
+
+

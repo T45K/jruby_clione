@@ -39,3 +39,5 @@ public class SHA2 implements Library {
         org.jruby.ext.digest.RubyDigest.createDigestSHA2(runtime);
     }
 }
+
+

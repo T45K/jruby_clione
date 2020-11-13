@@ -758,3 +758,5 @@ public class JZlibRubyGzipReader extends RubyGzipFile {
     private GZIPInputStream io;
     private PushbackInputStream bufferedStream;
 }
+
+

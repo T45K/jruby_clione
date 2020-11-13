@@ -788,3 +788,5 @@ public abstract class InvokeSite extends MutableCallSite {
             .from(boolean.class, Object.class, Class.class)
             .invokeStaticQuiet(LOOKUP, InvokeSite.class, "testClass");
 }
+
+

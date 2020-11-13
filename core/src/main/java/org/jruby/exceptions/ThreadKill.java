@@ -36,3 +36,5 @@ public class ThreadKill extends RuntimeException implements Unrescuable {
 		return this;
 	}
 }
+
+

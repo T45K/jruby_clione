@@ -2808,3 +2808,5 @@ public class JVMVisitor extends IRVisitor {
     private Instr nextInstr; // nextInstr while instruction walking.  For simple peephole optimizations.
     private boolean omitStoreLoad;
 }
+
+

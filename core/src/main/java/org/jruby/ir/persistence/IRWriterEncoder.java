@@ -72,3 +72,5 @@ public interface IRWriterEncoder {
     // Finish writing out the entire scope
     public void endEncoding(IRScope script);
 }
+
+

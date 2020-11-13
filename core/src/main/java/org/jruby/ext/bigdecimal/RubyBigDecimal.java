@@ -2359,3 +2359,5 @@ public class RubyBigDecimal extends RubyNumeric {
         return context.sites.BigDecimal;
     }
 }
+
+

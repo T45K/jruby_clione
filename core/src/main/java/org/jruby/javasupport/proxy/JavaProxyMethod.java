@@ -73,3 +73,4 @@ public interface JavaProxyMethod extends IRubyObject, ParameterTypes {
     int getModifiers();
 
 }
+

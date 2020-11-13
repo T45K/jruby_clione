@@ -38,3 +38,5 @@ public class GetClassVariableInstr extends GetInstr implements FixedArityInstr {
         visitor.GetClassVariableInstr(this);
     }
 }
+
+

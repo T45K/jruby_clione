@@ -45,3 +45,5 @@ public class ReadonlyGlobalVariable extends GlobalVariable {
         throw runtime.newNameError(name() + " is a read-only variable", runtime.newSymbol(name()));
     }
 }
+
+

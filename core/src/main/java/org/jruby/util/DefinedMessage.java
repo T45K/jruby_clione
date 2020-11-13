@@ -58,3 +58,5 @@ public enum DefinedMessage {
 
     private final String text;
 }
+
+

@@ -21,3 +21,5 @@ public class InstanceFieldGetter extends FieldMethodZero {
         catch (IllegalAccessException ex) { return handleGetException(context.runtime, ex); }
     }
 }
+
+

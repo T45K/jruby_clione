@@ -46,3 +46,4 @@ import org.jruby.Ruby;
 public interface BasicLibraryService {
     boolean basicLoad(Ruby runtime) throws IOException;
 }
+

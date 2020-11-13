@@ -302,3 +302,5 @@ public class TracePoint extends RubyObject {
     private IRubyObject binding;
     private volatile boolean inside = false;
 }
+
+

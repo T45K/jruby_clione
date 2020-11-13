@@ -116,3 +116,4 @@ public class ArrayDerefInvokeSite extends NormalInvokeSite {
             .cast(RubyString.class, RubyString.class)
             .invokeVirtualQuiet(MethodHandles.publicLookup(), "strDup");
 }
+

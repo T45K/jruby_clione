@@ -32,3 +32,5 @@ public abstract class StrTerm {
     public abstract int getFlags();
     public abstract int parseString(RubyLexer lexer) throws java.io.IOException;
 }
+
+

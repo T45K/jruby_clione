@@ -124,3 +124,5 @@ public class AttrAssignNode extends Node implements INameNode, IArgumentNode {
         return Node.createList(receiverNode, argsNode);
     }
 }
+
+

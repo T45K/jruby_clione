@@ -786,3 +786,5 @@ public class Addrinfo extends RubyObject {
     private boolean isBroadcast;
     private Protocol protocol = Protocol.getProtocolByNumber(0);
 }
+
+

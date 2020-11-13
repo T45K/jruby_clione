@@ -90,3 +90,5 @@ public abstract class ResourceException extends IOException {
 
     public abstract RaiseException newRaiseException(Ruby runtime);
 }
+
+

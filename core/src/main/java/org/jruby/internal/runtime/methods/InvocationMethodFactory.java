@@ -836,3 +836,5 @@ public class InvocationMethodFactory extends MethodFactory implements Opcodes {
     @Deprecated
     private static final Class[] RubyModule_and_Visibility = new Class[]{ RubyModule.class, Visibility.class };
 }
+
+

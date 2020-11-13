@@ -51,3 +51,5 @@ public class ZeroOperandArgNoBlockCallInstr extends CallInstr {
         return getCallSite().call(context, self, object);
     }
 }
+
+

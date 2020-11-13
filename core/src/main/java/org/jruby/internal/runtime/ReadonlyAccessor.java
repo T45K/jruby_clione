@@ -58,3 +58,5 @@ public class ReadonlyAccessor implements IAccessor {
         throw newValue.getRuntime().newNameError(name + " is a read-only variable", name);
     }
 }
+
+

@@ -29,3 +29,5 @@ public class InstanceSuperIterInvokeSite extends ResolvedSuperInvokeSite {
         return IRRuntimeHelpers.instanceSuperIterSplatArgs(context, self, superName, definingModule, args, block, splatMap);
     }
 }
+
+

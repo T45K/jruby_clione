@@ -26,3 +26,5 @@ public class SaveBindingVisibilityInstr extends NoOperandResultBaseInstr impleme
         visitor.SaveBindingVisibilityInstr(this);
     }
 }
+
+

@@ -110,3 +110,5 @@ public class RubyGenerator extends RubyObject {
 
     private RubyProc proc;
 }
+
+

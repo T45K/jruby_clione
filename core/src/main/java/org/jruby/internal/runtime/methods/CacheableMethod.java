@@ -6,3 +6,5 @@ package org.jruby.internal.runtime.methods;
 public interface CacheableMethod {
     public DynamicMethod getMethodForCaching();
 }
+
+

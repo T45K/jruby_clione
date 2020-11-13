@@ -711,3 +711,5 @@ public class JavaProxy extends RubyObject {
     }
 
 }
+
+

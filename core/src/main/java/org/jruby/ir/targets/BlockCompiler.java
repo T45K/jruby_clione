@@ -12,3 +12,5 @@ public interface BlockCompiler {
     public abstract void prepareBlock(IRClosure closure, String parentScopeField, Handle handle, String file, int line, String encodedArgumentDescriptors,
                                       org.jruby.runtime.Signature signature);
 }
+
+

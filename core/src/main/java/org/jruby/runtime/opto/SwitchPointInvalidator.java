@@ -70,3 +70,5 @@ public class SwitchPointInvalidator implements Invalidator {
         return oldSwitchPoint;
     }
 }
+
+

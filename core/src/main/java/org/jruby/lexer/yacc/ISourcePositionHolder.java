@@ -34,3 +34,5 @@ public interface ISourcePositionHolder {
 	public ISourcePosition getPosition();
 	public void setPosition(ISourcePosition position);
 }
+
+

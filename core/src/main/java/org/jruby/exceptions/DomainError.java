@@ -38,3 +38,5 @@ public class DomainError extends ArgumentError {
         super(message, exception);
     }
 }
+
+

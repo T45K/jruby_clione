@@ -36,3 +36,5 @@ public abstract class MethodFactory {
     abstract DynamicMethod createMethod(RubyModule module, com.kenai.jffi.Function function, 
             Type returnType, Type[] parameterTypes, CallingConvention convention, IRubyObject enums, boolean ignoreErrno);
 }
+
+

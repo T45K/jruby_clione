@@ -1516,3 +1516,5 @@ public class StringIO extends RubyObject implements EncodingCapable, DataType {
         }
     }
 }
+
+

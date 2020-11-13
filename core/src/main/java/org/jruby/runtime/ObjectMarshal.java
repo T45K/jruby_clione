@@ -52,3 +52,5 @@ public interface ObjectMarshal<T> {
     void marshalTo(Ruby runtime, T obj, RubyClass type, MarshalStream marshalStream) throws IOException;
     T unmarshalFrom(Ruby runtime, RubyClass type, UnmarshalStream unmarshalStream) throws IOException;
 }
+
+

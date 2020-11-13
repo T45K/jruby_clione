@@ -36,3 +36,5 @@ public class LabelInstr extends OneOperandInstr implements FixedArityInstr {
         visitor.LabelInstr(this);
     }
 }
+
+

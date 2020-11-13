@@ -10,3 +10,5 @@ public class RescueModNode extends RescueNode {
         super(position, bodyNode, rescueNode, null /* else */);
     }
 }
+
+

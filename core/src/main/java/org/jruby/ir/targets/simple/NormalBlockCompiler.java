@@ -57,3 +57,5 @@ public class NormalBlockCompiler implements BlockCompiler {
         compiler.invokeIRHelper("prepareBlock", sig(Block.class, ThreadContext.class, IRubyObject.class, DynamicScope.class, BlockBody.class));
     }
 }
+
+

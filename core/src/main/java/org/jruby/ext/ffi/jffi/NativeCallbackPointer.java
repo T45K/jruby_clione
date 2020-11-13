@@ -41,3 +41,5 @@ class NativeCallbackPointer extends AbstractInvoker {
                 closureInfo.returnType, closureInfo.parameterTypes, closureInfo.convention, getRuntime().getNil(), false);
     }
 }
+
+

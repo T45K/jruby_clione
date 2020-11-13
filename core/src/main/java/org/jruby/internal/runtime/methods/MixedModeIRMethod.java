@@ -266,3 +266,5 @@ public class MixedModeIRMethod extends AbstractIRMethod implements Compilable<Dy
     }
 
 }
+
+

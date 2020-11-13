@@ -6,3 +6,5 @@ public interface ResultInstr {
     public Variable getResult();
     public void updateResult(Variable v);
 }
+
+

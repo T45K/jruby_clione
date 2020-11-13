@@ -38,3 +38,5 @@ public class NormalGlobalVariableCompiler implements GlobalVariableCompiler {
         compiler.adapter.pop();
     }
 }
+
+

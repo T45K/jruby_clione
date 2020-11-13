@@ -52,3 +52,5 @@ public class RubyNoMemoryError extends RubyException {
         return new NoMemoryError(message, this);
     }
 }
+
+

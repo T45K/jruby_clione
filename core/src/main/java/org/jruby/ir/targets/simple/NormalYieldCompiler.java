@@ -70,3 +70,5 @@ public class NormalYieldCompiler implements YieldCompiler {
         compiler.adapter.invokestatic(classData.clsName, methodName, incomingSig);
     }
 }
+
+

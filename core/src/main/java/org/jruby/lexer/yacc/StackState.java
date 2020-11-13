@@ -77,3 +77,5 @@ public class StackState implements Cloneable {
         return (stack & 1) != 0;
     }
 }
+
+

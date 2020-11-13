@@ -38,3 +38,5 @@ public interface IAccessor {
     public IRubyObject getValue();
     public IRubyObject setValue(IRubyObject newValue);
 }
+
+

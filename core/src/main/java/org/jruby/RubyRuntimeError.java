@@ -52,3 +52,5 @@ public class RubyRuntimeError extends RubyStandardError {
         return new RuntimeError(message, this);
     }
 }
+
+

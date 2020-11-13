@@ -179,3 +179,5 @@ public abstract class JavaAccessibleObject extends RubyObject {
     }
 
 }
+
+

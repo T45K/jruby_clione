@@ -43,3 +43,5 @@ abstract public class MemoryObject extends RubyObject {
 
     protected abstract MemoryIO allocateMemoryIO();
 }
+
+

@@ -26,3 +26,5 @@ class DebugLog {
     public static final DebugLog JarExtension = new DebugLog("jarExtension");
     public static final DebugLog Resource = new DebugLog("fileResource");
 }
+
+

@@ -75,3 +75,5 @@ public final class Enums extends RubyObject {
         return callMethod(context, "__map_symbol", symbol);
     }
 }
+
+

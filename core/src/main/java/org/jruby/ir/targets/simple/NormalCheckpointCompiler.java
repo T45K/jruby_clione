@@ -22,3 +22,5 @@ public class NormalCheckpointCompiler implements CheckpointCompiler {
                 sig(void.class));
     }
 }
+
+

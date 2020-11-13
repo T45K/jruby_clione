@@ -17,3 +17,5 @@ public final class AssignedName {
         return getClass().getName() + '@' + Integer.toHexString(hashCode()) + '(' + name + ' ' + type + ')';
     }
 }
+
+

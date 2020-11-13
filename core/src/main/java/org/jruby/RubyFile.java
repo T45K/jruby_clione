@@ -2443,3 +2443,5 @@ public class RubyFile extends RubyIO implements EncodingCapable {
     @Deprecated
     protected String path;
 }
+
+

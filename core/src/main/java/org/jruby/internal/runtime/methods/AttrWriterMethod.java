@@ -92,3 +92,5 @@ public class AttrWriterMethod extends JavaMethodOne {
         this(implementationClass, visibility, variableName);
     }
 }
+
+

@@ -86,3 +86,5 @@ public class LineNumberInstr extends NoOperandInstr implements FixedArityInstr {
         visitor.LineNumberInstr(this);
     }
 }
+
+

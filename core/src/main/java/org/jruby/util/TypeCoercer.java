@@ -14,3 +14,5 @@ import org.jruby.runtime.builtin.IRubyObject;
 public interface TypeCoercer {
     public Object coerce(IRubyObject self);
 }
+
+

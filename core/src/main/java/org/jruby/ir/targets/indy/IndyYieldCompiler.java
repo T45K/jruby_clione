@@ -32,3 +32,5 @@ public class IndyYieldCompiler implements YieldCompiler {
         compiler.adapter.invokedynamic("yieldValues", sig(JVM.OBJECT, params(ThreadContext.class, Block.class, JVM.OBJECT, arity)), YieldSite.BOOTSTRAP, 0);
     }
 }
+
+

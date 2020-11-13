@@ -38,3 +38,5 @@ public class TypeError extends StandardError {
         super(message, exception);
     }
 }
+
+

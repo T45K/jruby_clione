@@ -10,3 +10,5 @@ public interface ClosureAcceptingInstr {
     public Operand getClosureArg();
     public boolean hasLiteralClosure();
 }
+
+

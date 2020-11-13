@@ -24,3 +24,5 @@ public class PushBlockBindingInstr extends NoOperandInstr implements FixedArityI
         visitor.PushBlockBindingInstr(this);
     }
 }
+
+

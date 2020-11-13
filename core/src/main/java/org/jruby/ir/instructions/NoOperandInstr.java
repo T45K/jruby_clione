@@ -19,3 +19,5 @@ public abstract class NoOperandInstr extends Instr {
         throw new IllegalArgumentException("Setting operand on no-operand instr");
     }
 }
+
+

@@ -64,3 +64,4 @@ public class ThrowExceptionInstr extends OneOperandInstr implements FixedArityIn
         visitor.ThrowExceptionInstr(this);
     }
 }
+

@@ -514,3 +514,4 @@ public final class EncodingService {
         return getFileSystemEncoding();
     }
 }
+

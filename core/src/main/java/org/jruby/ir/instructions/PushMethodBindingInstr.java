@@ -24,3 +24,5 @@ public class PushMethodBindingInstr extends NoOperandInstr implements FixedArity
         visitor.PushMethodBindingInstr(this);
     }
 }
+
+

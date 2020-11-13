@@ -6,3 +6,4 @@ public interface EncodingCapable {
     Encoding getEncoding();
     void setEncoding(Encoding e);
 }
+

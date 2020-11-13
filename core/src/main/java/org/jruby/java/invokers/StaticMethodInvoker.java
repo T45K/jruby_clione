@@ -144,3 +144,5 @@ public final class StaticMethodInvoker extends MethodInvoker {
         return call(context, self, clazz, name, arg0, arg1, arg2);
     }
 }
+
+

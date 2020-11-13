@@ -10,3 +10,5 @@ public abstract class MultiBranchInstr extends Instr {
 
     public abstract Label[] getJumpTargets();
 }
+
+

@@ -6,3 +6,5 @@ package org.jruby.ir.operands;
 public interface Stringable {
     public String getString();
 }
+
+

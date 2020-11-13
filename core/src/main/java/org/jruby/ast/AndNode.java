@@ -82,3 +82,5 @@ public class AndNode extends Node implements BinaryOperatorNode {
         return Node.createList(firstNode, secondNode);
     }
 }
+
+

@@ -21,3 +21,5 @@ public abstract class FieldInstaller extends NamedInstaller {
         return Modifier.isPublic(field.getModifiers()) || Java.trySetAccessible(field);
     }
 }
+
+

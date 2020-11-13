@@ -10,3 +10,5 @@ public class MonomorphicCallSite extends CachingCallSite {
         super(methodName, CallType.NORMAL);
     }
 }
+
+

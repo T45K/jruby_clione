@@ -52,3 +52,5 @@ public class RubySecurityError extends RubyException {
         return new SecurityError(message, this);
     }
 }
+
+

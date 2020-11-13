@@ -66,3 +66,5 @@ public class TemporaryFixnumVariable extends TemporaryLocalVariable {
         return new TemporaryFixnumVariable(d.decodeInt());
     }
 }
+
+

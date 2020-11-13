@@ -19,3 +19,5 @@ public interface Script {
     public void setFilename(String filename);
     public void setRootScope(StaticScope scope);
 }
+
+

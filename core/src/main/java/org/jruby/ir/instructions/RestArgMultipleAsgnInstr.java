@@ -72,3 +72,5 @@ public class RestArgMultipleAsgnInstr extends MultipleAsgnBase implements FixedA
         visitor.RestArgMultipleAsgnInstr(this);
     }
 }
+
+

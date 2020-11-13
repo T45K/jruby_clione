@@ -50,3 +50,5 @@ final class CallbackMemoryIO extends InvalidMemoryIO implements AllocatedDirectM
         return !unmanaged;
     }
 }
+
+

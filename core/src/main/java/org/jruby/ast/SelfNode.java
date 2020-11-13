@@ -66,3 +66,5 @@ public class SelfNode extends Node implements SideEffectFree {
         return false;
     }
 }
+
+

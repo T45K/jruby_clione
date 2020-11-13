@@ -266,3 +266,5 @@ public class LoadLocalVarPlacementNode extends FlowGraphNode<LoadLocalVarPlaceme
     Set<LocalVariable> outRequiredLoads; // On exit from flow graph node: Variables that need to be loaded from the heap binding
     Set<LocalVariable> reqdLoads;        // Temporary state while applying transfer function
 }
+
+

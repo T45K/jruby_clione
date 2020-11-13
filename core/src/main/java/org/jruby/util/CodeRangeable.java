@@ -38,3 +38,5 @@ public interface CodeRangeable extends ByteListHolder {
     void modifyAndKeepCodeRange();
     Encoding checkEncoding(CodeRangeable other);
 }
+
+

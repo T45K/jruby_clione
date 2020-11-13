@@ -270,3 +270,5 @@ public class Tempfile extends RubyFile implements Finalizable {
     }
 
 }
+
+

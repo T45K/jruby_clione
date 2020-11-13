@@ -25,3 +25,5 @@ public class ReceiveRubyExceptionInstr extends ReceiveExceptionBase {
         return new ReceiveRubyExceptionInstr(d.decodeVariable());
     }
 }
+
+

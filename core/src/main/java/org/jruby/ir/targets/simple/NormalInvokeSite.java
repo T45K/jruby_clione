@@ -55,3 +55,5 @@ public class NormalInvokeSite extends InvokeSite {
         return method.isUndefined() || (!methodName.equals("method_missing") && !method.isCallableFrom(caller, callType));
     }
 }
+
+

@@ -51,3 +51,5 @@ public class RubyTypeError extends RubyStandardError {
         return new TypeError(message, this);
     }
 }
+
+

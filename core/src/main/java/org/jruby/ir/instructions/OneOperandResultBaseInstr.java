@@ -38,3 +38,5 @@ public abstract class OneOperandResultBaseInstr extends ResultBaseInstr {
         }
     }
 }
+
+

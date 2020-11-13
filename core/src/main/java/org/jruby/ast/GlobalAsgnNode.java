@@ -82,3 +82,5 @@ public class GlobalAsgnNode extends AssignableNode implements INameNode {
         return false;
     }
 }
+
+

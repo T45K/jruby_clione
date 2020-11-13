@@ -14,3 +14,5 @@ public abstract class BoxInstr extends NOperandResultBaseInstr {
         return getOperands()[0];
     }
 }
+
+

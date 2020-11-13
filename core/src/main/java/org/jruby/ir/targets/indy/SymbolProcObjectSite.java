@@ -47,3 +47,5 @@ public class SymbolProcObjectSite extends LazyObjectSite {
         return IRRuntimeHelpers.newSymbolProc(context, symbol);
     }
 }
+
+

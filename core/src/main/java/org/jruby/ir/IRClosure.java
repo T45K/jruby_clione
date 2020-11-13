@@ -372,3 +372,5 @@ public class IRClosure extends IRScope {
         file.encode(getSignature());
     }
 }
+
+

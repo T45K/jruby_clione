@@ -38,3 +38,5 @@ public class Fatal extends Exception {
         super(message, exception);
     }
 }
+
+

@@ -451,3 +451,5 @@ public class IRBytecodeAdapter {
     protected final ArgumentsCompiler argumentsCompiler;
     public int ipc = 0;  // counter for dumping instr index when in DEBUG
 }
+
+

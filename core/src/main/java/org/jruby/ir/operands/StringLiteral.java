@@ -6,3 +6,5 @@ public interface StringLiteral {
     ByteList getByteList();
     int getCodeRange();
 }
+
+

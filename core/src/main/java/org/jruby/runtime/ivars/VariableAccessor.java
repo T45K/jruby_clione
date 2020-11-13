@@ -150,3 +150,5 @@ public abstract class VariableAccessor {
     public static final VariableAccessor DUMMY_ACCESSOR = new VariableAccessor(null, null, -1, -1) {};
     
 }
+
+

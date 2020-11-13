@@ -45,3 +45,5 @@ public interface ProfileReporter {
      */
     public void report( ProfileCollection collection );
 }
+
+

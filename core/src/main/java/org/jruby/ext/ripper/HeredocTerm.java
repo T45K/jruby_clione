@@ -219,3 +219,5 @@ public class HeredocTerm extends StrTerm {
         return RipperParser.tSTRING_CONTENT;
     }
 }
+
+

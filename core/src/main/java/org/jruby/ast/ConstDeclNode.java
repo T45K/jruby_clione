@@ -95,3 +95,5 @@ public class ConstDeclNode extends AssignableNode implements INameNode {
         return false;
     }
 }
+
+

@@ -74,3 +74,5 @@ public class MethodData {
     public final Map<Label, org.objectweb.asm.Label> labelMap = new HashMap<Label, org.objectweb.asm.Label>();
 
 }
+
+

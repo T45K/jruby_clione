@@ -126,3 +126,5 @@ public interface Warnings {
     @Deprecated
     public abstract void warning(ID id, String fileName, int lineNumber, String message, Object...data);
 }
+
+

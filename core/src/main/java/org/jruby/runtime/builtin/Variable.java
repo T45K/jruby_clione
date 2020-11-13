@@ -50,3 +50,5 @@ public interface Variable<BaseObjectType> {
     boolean isRubyVariable();
 
 }
+
+

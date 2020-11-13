@@ -37,3 +37,5 @@ public class RestoreBindingVisibilityInstr extends OneOperandInstr implements Fi
         visitor.RestoreBindingVisibilityInstr(this);
     }
 }
+
+

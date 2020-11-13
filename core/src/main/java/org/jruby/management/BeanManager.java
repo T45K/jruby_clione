@@ -44,3 +44,5 @@ public interface BeanManager {
     boolean tryRestartAgent();
 
 }
+
+

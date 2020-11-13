@@ -42,3 +42,5 @@ public class InterpretedIRMetaClassBody extends InterpretedIRBodyMethod {
         return callInternal(context, self, clazz, name, block);
     }
 }
+
+

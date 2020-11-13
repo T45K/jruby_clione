@@ -155,3 +155,5 @@ public abstract class MethodInstaller extends NamedInstaller {
     void setLocalMethod(boolean flag) { localMethod = flag; }
 
 }
+
+

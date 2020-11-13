@@ -113,3 +113,5 @@ public class LiveVariablesProblem extends DataFlowProblem<LiveVariablesProblem, 
     private final HashSet<LocalVariable> localVars = new HashSet<LocalVariable>(); // Local variables that can be live across dataflow barriers
     private final Collection<LocalVariable> varsLiveOnScopeExit;
 }
+
+

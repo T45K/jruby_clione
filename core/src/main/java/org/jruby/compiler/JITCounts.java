@@ -42,3 +42,5 @@ class JITCounts {
     final AtomicLong irAverageSize = new AtomicLong(0);
     final AtomicLong irLargestSize = new AtomicLong(0);
 }
+
+

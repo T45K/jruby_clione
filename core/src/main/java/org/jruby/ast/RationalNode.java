@@ -53,3 +53,5 @@ public class RationalNode extends NumericNode implements SideEffectFree {
         return denominator;
     }
 }
+
+

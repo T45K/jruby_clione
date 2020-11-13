@@ -118,3 +118,5 @@ public interface IRubyWarnings {
     @Deprecated void warning(ID id, ISourcePosition position, String message);
     void warning(ID id, String fileName, int lineNumber, String message);
 }
+
+

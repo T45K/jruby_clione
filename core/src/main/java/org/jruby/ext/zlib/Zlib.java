@@ -52,3 +52,4 @@ public final class Zlib {
     public static final byte OS_UNKNOWN = (byte) 0xff;
     public static final byte OS_CODE = OS_WIN32; // TODO: why we define OS_CODE to OS_WIN32?
 }
+

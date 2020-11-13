@@ -38,3 +38,5 @@ public class LoadImplicitClosureInstr extends NoOperandResultBaseInstr implement
         visitor.LoadImplicitClosure(this);
     }
 }
+
+

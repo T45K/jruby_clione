@@ -35,3 +35,4 @@ public class Complex implements Library {
         RubyComplex.setCanonicalization(true);
     }
 }
+

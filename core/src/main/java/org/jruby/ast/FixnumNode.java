@@ -83,3 +83,5 @@ public class FixnumNode extends NumericNode implements ILiteralNode, SideEffectF
         return "long: " + value;
     }
 }
+
+

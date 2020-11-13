@@ -35,3 +35,5 @@ public class IndyConstantCompiler implements ConstantCompiler {
         compiler.adapter.invokedynamic("lexicalSearchConst", sig(JVM.OBJECT, params(ThreadContext.class, StaticScope.class)), ConstantLookupSite.BOOTSTRAP, id, 0, 1);
     }
 }
+
+

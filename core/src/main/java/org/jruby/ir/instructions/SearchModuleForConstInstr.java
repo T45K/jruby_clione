@@ -102,3 +102,5 @@ public class SearchModuleForConstInstr extends OneOperandResultBaseInstr impleme
         visitor.SearchModuleForConstInstr(this);
     }
 }
+
+

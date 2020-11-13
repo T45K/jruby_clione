@@ -54,3 +54,5 @@ public interface ISourcePosition extends PositionAware {
 	public int getLine();
 
 }
+
+

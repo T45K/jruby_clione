@@ -47,3 +47,5 @@ public @interface JRubyClass {
     String parent() default "Object";
     String[] include() default {};
 }
+
+

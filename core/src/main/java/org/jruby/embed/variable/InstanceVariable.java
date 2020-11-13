@@ -178,3 +178,5 @@ public class InstanceVariable extends AbstractVariable {
         ((RubyObject) getReceiver()).removeInstanceVariable(name);
     }
 }
+
+

@@ -34,3 +34,5 @@ public class JavaExtensions {
     private static final Consumer<RubyModule> NOOP = (noop) -> { /* no extensions */ };
 
 }
+
+

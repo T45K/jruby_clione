@@ -2730,3 +2730,5 @@ public final class StringSupport {
         return enc.isUnicode();
     }
 }
+
+

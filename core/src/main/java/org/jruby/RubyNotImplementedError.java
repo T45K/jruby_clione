@@ -52,3 +52,5 @@ public class RubyNotImplementedError extends RubyScriptError {
         return new NotImplementedError(message, this);
     }
 }
+
+

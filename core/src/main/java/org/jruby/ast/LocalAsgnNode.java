@@ -104,3 +104,5 @@ public class LocalAsgnNode extends AssignableNode implements INameNode, IScopedN
         return false;
     }
 }
+
+

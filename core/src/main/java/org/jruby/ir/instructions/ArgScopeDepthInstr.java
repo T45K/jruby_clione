@@ -35,3 +35,5 @@ public class ArgScopeDepthInstr extends NoOperandResultBaseInstr implements Fixe
         return new ArgScopeDepthInstr(d.decodeVariable());
     }
 }
+
+

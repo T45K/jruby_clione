@@ -309,3 +309,5 @@ public class RegexpOptions implements Cloneable {
     private boolean kcodeDefault;
     private boolean literal;
 }
+
+

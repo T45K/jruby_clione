@@ -16,3 +16,5 @@ final class MemoryObjectParameterStrategy extends PointerParameterStrategy {
         return ((MemoryObject) parameter).getMemoryIO();
     }
 }
+
+

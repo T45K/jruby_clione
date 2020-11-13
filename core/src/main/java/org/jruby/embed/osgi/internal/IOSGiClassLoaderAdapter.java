@@ -35,3 +35,5 @@ public interface IOSGiClassLoaderAdapter {
      */
     ClassLoader getClassLoader(Bundle bundle);
 }
+
+

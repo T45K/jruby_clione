@@ -105,3 +105,5 @@ public abstract class Operand {
         throw new RuntimeException("operand " + this.getClass().getSimpleName() + " has no visit logic.");
     }
 }
+
+

@@ -1504,3 +1504,5 @@ public class RubyFixnum extends RubyInteger implements Constantizable {
         return RubyNumeric.num2fix(other);
     }
 }
+
+

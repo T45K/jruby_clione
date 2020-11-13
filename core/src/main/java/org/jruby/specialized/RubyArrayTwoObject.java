@@ -398,3 +398,5 @@ public class RubyArrayTwoObject extends RubyArraySpecialized {
         return context.sites.Array2;
     }
 }
+
+

@@ -2420,3 +2420,5 @@ public class RubyLexer extends LexingCommon {
         return hexValue;
     }
 }
+
+

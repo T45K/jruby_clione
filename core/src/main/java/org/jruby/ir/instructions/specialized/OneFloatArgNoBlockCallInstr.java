@@ -54,3 +54,5 @@ public class OneFloatArgNoBlockCallInstr extends CallInstr {
         return getCallSite().call(context, self, object, flote);
     }
 }
+
+

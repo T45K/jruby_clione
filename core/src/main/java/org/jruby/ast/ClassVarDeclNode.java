@@ -82,3 +82,5 @@ public class ClassVarDeclNode extends AssignableNode implements INameNode {
         return false;
     }
 }
+
+

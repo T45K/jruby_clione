@@ -185,3 +185,5 @@ public interface EmbedRubyObjectAdapter extends RubyObjectAdapter {
      */
     <T> T runRubyMethod(Class<T> returnType, Object receiver, String methodName, Block block, Object... args);
 }
+
+

@@ -280,3 +280,5 @@ public class LiveVariableNode extends FlowGraphNode<LiveVariablesProblem, LiveVa
     private BitSet living;  // Temporary state while applying transfer function
     private int setSize;    // Size of the "this.in" and "this.out" bit sets
 }
+
+

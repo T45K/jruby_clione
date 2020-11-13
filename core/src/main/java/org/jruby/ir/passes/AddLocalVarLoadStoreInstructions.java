@@ -84,3 +84,5 @@ public class AddLocalVarLoadStoreInstructions extends CompilerPass {
         return true;
     }
 }
+
+

@@ -57,3 +57,5 @@ public class LoadLocalVarPlacementProblem extends DataFlowProblem<LoadLocalVarPl
     // Has this method's (or the containing method's binding in the case of a closure) binding escaped?
     private boolean bindingHasEscaped;
 }
+
+

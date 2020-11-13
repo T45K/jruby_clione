@@ -1001,3 +1001,5 @@ public class RubyGlobal {
             "$FILENAME" // ARGF current file name
     ));
 }
+
+

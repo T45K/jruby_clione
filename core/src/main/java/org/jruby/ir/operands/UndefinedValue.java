@@ -404,3 +404,5 @@ public class UndefinedValue extends Operand implements IRubyObject {
     @Deprecated
     public Object dataGetStructChecked() { throw undefinedOperation(); }
 }
+
+

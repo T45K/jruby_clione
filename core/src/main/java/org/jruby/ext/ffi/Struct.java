@@ -414,3 +414,5 @@ public class Struct extends MemoryObject implements StructLayout.Storage {
         getReferenceCache()[layout.getReferenceFieldIndex(member)] = value;
     }
 }
+
+

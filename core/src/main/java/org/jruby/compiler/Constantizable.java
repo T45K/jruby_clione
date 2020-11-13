@@ -7,3 +7,5 @@ package org.jruby.compiler;
 public interface Constantizable {
     public Object constant();
 }
+
+

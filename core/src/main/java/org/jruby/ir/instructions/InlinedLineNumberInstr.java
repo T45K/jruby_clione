@@ -37,3 +37,5 @@ public class InlinedLineNumberInstr extends LineNumberInstr {
         return scope;
     }
 }
+
+

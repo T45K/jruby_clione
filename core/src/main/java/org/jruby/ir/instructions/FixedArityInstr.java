@@ -7,3 +7,5 @@ package org.jruby.ir.instructions;
 public interface FixedArityInstr {
 
 }
+
+

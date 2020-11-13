@@ -238,3 +238,5 @@ final class DummyResourceStat implements FileStat {
     }
 
 }
+
+

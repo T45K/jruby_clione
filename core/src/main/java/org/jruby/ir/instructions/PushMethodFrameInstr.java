@@ -41,3 +41,5 @@ public class PushMethodFrameInstr extends NoOperandInstr implements FixedArityIn
         visitor.PushMethodFrameInstr(this);
     }
 }
+
+

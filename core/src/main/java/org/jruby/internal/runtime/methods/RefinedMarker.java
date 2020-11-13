@@ -58,3 +58,5 @@ public class RefinedMarker extends DynamicMethod {
         throw new RuntimeException("BUG: refined marker called as method");
     }
 }
+
+

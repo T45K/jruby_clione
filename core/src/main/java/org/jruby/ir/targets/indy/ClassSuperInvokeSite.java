@@ -29,3 +29,5 @@ public class ClassSuperInvokeSite extends ResolvedSuperInvokeSite {
         return IRRuntimeHelpers.classSuperSplatArgs(context, self, superName, definingModule, args, block, splatMap);
     }
 }
+
+

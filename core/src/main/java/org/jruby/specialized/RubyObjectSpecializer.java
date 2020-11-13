@@ -272,3 +272,5 @@ public class RubyObjectSpecializer {
         return jiteClass.getClassName().replace('/', '.');
     }
 }
+
+

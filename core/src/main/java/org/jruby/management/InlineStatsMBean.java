@@ -4,3 +4,5 @@ public interface InlineStatsMBean {
     long getInlineSuccessCount();
     long getInlineFailedCount();
 }
+
+

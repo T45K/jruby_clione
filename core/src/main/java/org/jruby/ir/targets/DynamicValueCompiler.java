@@ -32,3 +32,5 @@ public interface DynamicValueCompiler {
      */
     void hash(int length);
 }
+
+

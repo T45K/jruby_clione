@@ -75,3 +75,5 @@ public class InstVarNode extends Node implements INameNode, SideEffectFree {
         return EMPTY_LIST;
     }
 }
+
+

@@ -38,3 +38,5 @@ public class NormalBranchCompiler implements BranchCompiler {
         compiler.adapter.iftrue(label);
     }
 }
+
+

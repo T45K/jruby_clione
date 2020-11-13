@@ -174,3 +174,4 @@ public class JsonProfilePrinter extends ProfilePrinter {
         return buffer.toString();
     }
 }
+

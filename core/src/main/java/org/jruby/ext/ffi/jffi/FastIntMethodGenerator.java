@@ -129,3 +129,5 @@ final class FastIntMethodGenerator extends AbstractNumericMethodGenerator {
         }
     }
 }
+
+

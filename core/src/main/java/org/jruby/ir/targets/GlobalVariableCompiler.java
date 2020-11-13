@@ -15,3 +15,5 @@ public interface GlobalVariableCompiler {
      */
     void setGlobalVariable(String name, String file, int line);
 }
+
+
