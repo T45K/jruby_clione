@@ -97,13 +97,6 @@ public final class UndefinedMethod extends DynamicMethod {
     }
 
     /**
-     * UndefinedMethod is always visibility UNDEFINED
-     */
-    public Visibility getVisibility() {
-        return Visibility.UNDEFINED;
-    }
-
-    /**
      * Dummy implementation of setVisibility that does nothing.
      * 
      * @param visibility Ignored

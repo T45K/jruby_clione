@@ -75,7 +75,7 @@ public class JRubyOSGiBundleClassLoader extends ClassLoader implements BundleRef
      * look in OSGi first? true by default for now.
      * we could look in jruby first if that makes more sense.
      */
-    private final boolean _lookInOsgiFirst = true;
+    private boolean _lookInOsgiFirst = true;
 
     private LinkedHashMap<Bundle,ClassLoader> _libraries;
 

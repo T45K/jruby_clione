@@ -68,8 +68,6 @@ public class Timeout {
                 new ScheduledThreadPoolExecutor(Runtime.getRuntime().availableProcessors(), new DaemonThreadFactory());
         executor.setRemoveOnCancelPolicy(true);
         timeout.setInternalVariable(EXECUTOR_VARIABLE, executor);
-
-        timeout.getRuntime().pushPostExitFunction((context) -> { executor.shutdown(); return 0;});
     }
 
 
@@ -89,7 +87,7 @@ public class Timeout {
 
     @JRubyMethod(module = true)
     public static IRubyObject timeout(final ThreadContext context, IRubyObject recv, IRubyObject seconds, IRubyObject exceptionType, Block block) {
-        return timeout(context, recv, seconds, exceptionType, context.nil, block);
+        return timeout(context, recv, seconds, exceptionType, defaultTimeoutMessage(context), block);
     }
 
     @JRubyMethod(module = true)
@@ -106,11 +104,9 @@ public class Timeout {
         final AtomicBoolean latch = new AtomicBoolean(false);
 
         final Object id = exceptionType.isNil() ? new Object() : null;
-        final RubyString exceptionMessage = message.isNil() ? defaultTimeoutMessage(context) : message.convertToString();
-
         Runnable timeoutRunnable = id != null ?
-                TimeoutTask.newAnonymousTask(currentThread, timeout, latch, id, exceptionMessage) :
-                TimeoutTask.newTaskWithException(currentThread, timeout, latch, exceptionType, exceptionMessage);
+                TimeoutTask.newAnonymousTask(currentThread, timeout, latch, id, message.convertToString()) :
+                TimeoutTask.newTaskWithException(currentThread, timeout, latch, exceptionType, message.convertToString());
 
         ScheduledThreadPoolExecutor executor = (ScheduledThreadPoolExecutor) timeout.getInternalVariable("__executor__");
 

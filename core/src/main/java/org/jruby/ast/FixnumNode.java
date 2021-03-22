@@ -77,9 +77,4 @@ public class FixnumNode extends NumericNode implements ILiteralNode, SideEffectF
     public List<Node> childNodes() {
         return EMPTY_LIST;
     }
-
-    @Override
-    public String toStringExtraInfo() {
-        return "long: " + value;
-    }
 }

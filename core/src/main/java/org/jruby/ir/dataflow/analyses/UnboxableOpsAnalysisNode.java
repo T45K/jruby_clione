@@ -17,9 +17,9 @@ import java.util.*;
 
 public class UnboxableOpsAnalysisNode extends FlowGraphNode<UnboxableOpsAnalysisProblem, UnboxableOpsAnalysisNode> {
     private static class UnboxState {
-        final Map<Variable, Class> types;        // known types of variables
-        final Map<Variable, Class> unboxedVars;  // variables that exist in unboxed form of a specific type
-        final Set<Variable> unboxedDirtyVars;    // variables that exist in unboxed form and are dirty
+        Map<Variable, Class> types;        // known types of variables
+        Map<Variable, Class> unboxedVars;  // variables that exist in unboxed form of a specific type
+        Set<Variable> unboxedDirtyVars;    // variables that exist in unboxed form and are dirty
 
         public UnboxState() {
             types = new HashMap<Variable, Class>();

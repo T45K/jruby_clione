@@ -42,7 +42,6 @@ public class LoadFrameClosureInstr extends NoOperandResultBaseInstr implements F
         return new CopyInstr(ii.getRenamedVariable(result), ii.getCallClosure());
     }
 
-    // encode is from ResultBase since this has no other state.
     public static LoadFrameClosureInstr decode(IRReaderDecoder d) {
         return new LoadFrameClosureInstr(d.decodeVariable());
     }

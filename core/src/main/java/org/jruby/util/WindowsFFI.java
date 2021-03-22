@@ -28,11 +28,16 @@
 
 package org.jruby.util;
 
+import jnr.ffi.*;
+import jnr.ffi.LibraryOption;
+import jnr.ffi.Runtime;
 import jnr.ffi.annotations.Out;
 import jnr.ffi.byref.IntByReference;
 import jnr.ffi.types.intptr_t;
-import jnr.ffi.CallingConvention;
-import jnr.ffi.LibraryLoader;
+import jnr.ffi.types.uintptr_t;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A binding of a few key win32 functions we need to behave properly.
@@ -48,7 +53,6 @@ public class WindowsFFI {
         jnr.ffi.Pointer OpenProcess(int dwDesiredAccess, int bInheritHandle, int dwProcessId);
         int CloseHandle(jnr.ffi.Pointer handle);
         int GetLastError();
-        int SetLastError(int ErrorCode);
         int GetExitCodeProcess(jnr.ffi.Pointer hProcess, @Out IntByReference pointerToExitCodeDword);
         int TerminateProcess(jnr.ffi.Pointer hProcess, int uExitCode);
     }

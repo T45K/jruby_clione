@@ -90,7 +90,7 @@ public class ArgumentProcessor {
 
     private final List<Argument> arguments;
     private int argumentIndex = 0;
-    private final boolean processArgv;
+    private boolean processArgv;
     private final boolean rubyOpts;
     final RubyInstanceConfig config;
     private boolean endOfArguments = false;

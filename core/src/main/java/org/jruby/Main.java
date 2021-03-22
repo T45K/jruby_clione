@@ -263,18 +263,23 @@ public class Main {
         InputStream in   = config.getScriptSource();
         String filename  = config.displayedFileName();
 
-        final Ruby runtime;
+        Ruby _runtime;
 
         if (DripMain.DRIP_RUNTIME != null) {
             // use drip's runtime, reinitializing config
-            runtime = DripMain.DRIP_RUNTIME;
-            runtime.reinitialize(true);
+            _runtime = DripMain.DRIP_RUNTIME;
+            _runtime.reinitialize(true);
         } else {
-            runtime = Ruby.newInstance(config);
+            _runtime = Ruby.newInstance(config);
         }
 
+        final Ruby runtime = _runtime;
+        final AtomicBoolean didTeardown = new AtomicBoolean();
+
         try {
-            doSetContextClassLoader(runtime);
+            if (runtime != null) {
+                doSetContextClassLoader(runtime);
+            }
 
             if (in == null) {
                 // no script to run, return success
@@ -287,7 +292,9 @@ public class Main {
                 return doRunFromMain(runtime, in, filename);
             }
         } finally {
-            runtime.tearDown();
+            if (runtime != null) {
+                runtime.tearDown();
+            }
         }
     }
 

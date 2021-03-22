@@ -799,18 +799,17 @@ public class RubyFixnum extends RubyInteger implements Constantizable {
      */
     @Override
     public IRubyObject op_pow(ThreadContext context, IRubyObject other) {
-        if (other instanceof RubyFixnum) {
-            return powerFixnum(context, (RubyFixnum) other);
-        } else if (other instanceof RubyBignum) {
-            return powerOther(context, other);
-        } else if (other instanceof RubyFloat) {
+        if (other instanceof RubyNumeric) {
             double d_other = ((RubyNumeric) other).getDoubleValue();
             if (value < 0 && (d_other != Math.round(d_other))) {
                 RubyComplex complex = RubyComplex.newComplexRaw(context.runtime, this);
                 return numFuncall(context, complex, sites(context).op_exp_complex, other);
             }
+            if (other instanceof RubyFixnum) {
+                return powerFixnum(context, (RubyFixnum) other);
+            }
         }
-        return coerceBin(context, sites(context).op_exp, other);
+        return powerOther(context, other);
     }
 
     public IRubyObject op_pow(ThreadContext context, long other) {
@@ -826,15 +825,15 @@ public class RubyFixnum extends RubyInteger implements Constantizable {
         final Ruby runtime = context.runtime;
         final long a = this.value;
         if (other instanceof RubyBignum) {
-            if (a == 1) return RubyFixnum.one(runtime);
-            if (a == -1) {
-                return ((RubyBignum) other).even_p(context).isTrue() ? RubyFixnum.one(runtime) : RubyFixnum.minus_one(runtime);
-            }
             if (sites(context).op_lt_bignum.call(context, other, other, RubyFixnum.zero(runtime)).isTrue()) {
                 RubyRational rational = RubyRational.newRationalRaw(runtime, this);
                 return numFuncall(context, rational, sites(context).op_exp_rational, other);
             }
             if (a == 0) return RubyFixnum.zero(runtime);
+            if (a == 1) return RubyFixnum.one(runtime);
+            if (a == -1) {
+                return ((RubyBignum) other).even_p(context).isTrue() ? RubyFixnum.one(runtime) : RubyFixnum.minus_one(runtime);
+            }
             return RubyBignum.newBignum(runtime, RubyBignum.long2big(a)).op_pow(context, other);
         }
         if (other instanceof RubyFloat) {
@@ -1436,7 +1435,7 @@ public class RubyFixnum extends RubyInteger implements Constantizable {
     @Override
     public IRubyObject isNegative(ThreadContext context) {
         CachingCallSite op_lt_site = sites(context).basic_op_lt;
-        if (op_lt_site.isBuiltin(metaClass)) {
+        if (op_lt_site.retrieveCache(metaClass).method.isBuiltin()) {
             return RubyBoolean.newBoolean(context, value < 0);
         }
         return op_lt_site.call(context, this, this, RubyFixnum.zero(context.runtime));
@@ -1445,7 +1444,7 @@ public class RubyFixnum extends RubyInteger implements Constantizable {
     @Override
     public IRubyObject isPositive(ThreadContext context) {
         CachingCallSite op_gt_site = sites(context).basic_op_gt;
-        if (op_gt_site.isBuiltin(metaClass)) {
+        if (op_gt_site.retrieveCache(metaClass).method.isBuiltin()) {
             return RubyBoolean.newBoolean(context, value > 0);
         }
         return op_gt_site.call(context, this, this, RubyFixnum.zero(context.runtime));

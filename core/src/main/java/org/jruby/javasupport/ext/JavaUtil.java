@@ -615,13 +615,9 @@ public abstract class JavaUtil {
 
         final java.util.Collection clone;
         try {
-            clone = klass.getConstructor().newInstance();
+            clone = klass.newInstance();
         }
-        catch (InvocationTargetException ite) {
-            // old newInstance did not wrap exceptions, so keep doing that for now
-            Helpers.throwException(ite.getCause()); return null;
-        }
-        catch (IllegalAccessException | NoSuchMethodException e) {
+        catch (IllegalAccessException e) {
             // can not clone - most of Collections. returned types (e.g. EMPTY_LIST)
             return coll;
         }

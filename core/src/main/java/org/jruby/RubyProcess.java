@@ -280,7 +280,7 @@ public class RubyProcess {
         }
 
         // MRI: pst_message
-        public static String pst_message(String prefix, long pid, long status) {
+        private static String pst_message(String prefix, long pid, long status) {
             StringBuilder sb = new StringBuilder(prefix);
             sb
                     .append("pid ")
@@ -1295,8 +1295,7 @@ public class RubyProcess {
     public static IRubyObject getrlimit(Ruby runtime, IRubyObject arg) {
         if (!runtime.getPosix().isNative() || Platform.IS_WINDOWS) {
             runtime.getWarnings().warn("Process#getrlimit not supported on this platform");
-            RubyFixnum max = runtime.newFixnum(Long.MAX_VALUE);
-            return runtime.newArray(max, max);
+            return runtime.newFixnum(Long.MAX_VALUE);
         }
 
         RLimit rlimit = runtime.getPosix().getrlimit(rlimitResourceType(runtime, arg));

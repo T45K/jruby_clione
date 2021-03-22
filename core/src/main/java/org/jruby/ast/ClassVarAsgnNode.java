@@ -43,7 +43,7 @@ import org.jruby.lexer.yacc.ISourcePosition;
  * Class variable assignment node.
  */
 public class ClassVarAsgnNode extends AssignableNode implements INameNode {
-    private final RubySymbol name;
+    private RubySymbol name;
 
     /**
      * @param name id of the class variable to assign to

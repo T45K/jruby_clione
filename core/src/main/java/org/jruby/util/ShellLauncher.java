@@ -117,7 +117,7 @@ public class ShellLauncher {
         private RubyInstanceConfig config;
         private Thread processThread;
         private int result;
-        private final Ruby parentRuntime;
+        private Ruby parentRuntime;
 
         public ScriptThreadProcess(Ruby parentRuntime, final String[] argArray, final String[] env, final File dir) {
             this(parentRuntime, argArray, env, dir, true);
@@ -1298,11 +1298,11 @@ public class ShellLauncher {
             return verifyPathExecutable;
         }
 
-        private final Ruby runtime;
-        private final boolean doExecutableSearch;
-        private final IRubyObject[] rawArgs;
-        private final String shell;
-        private final String[] args;
+        private Ruby runtime;
+        private boolean doExecutableSearch;
+        private IRubyObject[] rawArgs;
+        private String shell;
+        private String[] args;
         private String[] execArgs;
         private boolean cmdBuiltin = false;
 

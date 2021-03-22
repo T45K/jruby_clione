@@ -25,12 +25,12 @@ import static org.jruby.ir.util.IGVHelper.startTag;
  * visitor altogether not accessed via CFG.
  */
 public class IGVCFGVisitor {
-    final PrintStream writer;
-    final Map<BasicBlock, Integer> indexOffsets = new HashMap();
-    final List<Tuple<Integer, Integer>> instrEdges = new ArrayList();
-    final List<Tuple<Integer, JumpTargetInstr>> extraInstrEdges = new ArrayList();
+    PrintStream writer;
+    Map<BasicBlock, Integer> indexOffsets = new HashMap();
+    List<Tuple<Integer, Integer>> instrEdges = new ArrayList();
+    List<Tuple<Integer, JumpTargetInstr>> extraInstrEdges = new ArrayList();
     Instr lastInstr = null; // Last instr from the previous BB.
-    final IGVInstrListener listener;
+    IGVInstrListener listener;
 
     public IGVCFGVisitor(CFG cfg, PrintStream writer, String name) {
         this.writer = writer;

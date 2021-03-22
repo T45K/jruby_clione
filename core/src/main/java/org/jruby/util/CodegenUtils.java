@@ -13,7 +13,6 @@ import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Type;
 
 import javax.lang.model.element.Name;
-import java.lang.invoke.MethodType;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -121,10 +120,6 @@ public class CodegenUtils {
 
     public static String sig(Class retval, String descriptor, Class... params) {
         return sigParams(new StringBuilder(), descriptor, params).append( ci(retval) ).toString();
-    }
-
-    public static String sig(MethodType type) {
-        return sig(type.returnType(), type.parameterArray());
     }
 
     @Deprecated // not used

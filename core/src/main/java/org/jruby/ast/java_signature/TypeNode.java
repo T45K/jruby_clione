@@ -33,7 +33,7 @@ package org.jruby.ast.java_signature;
  * Base class for all typed nodes
  */
 public class TypeNode implements AnnotationExpression {
-    protected final String name;
+    protected String name;
 
     public TypeNode(String name) {
         this.name = name;
@@ -72,15 +72,6 @@ public class TypeNode implements AnnotationExpression {
 
     public boolean isArray() {
         return false;
-    }
-
-    /**
-     * Accept for the visitor pattern.
-     * @param visitor the visitor
-     **/
-    @Override
-    public <T> T accept(AnnotationVisitor<T> visitor) {
-    	return visitor.type(this);
     }
 
     @Override

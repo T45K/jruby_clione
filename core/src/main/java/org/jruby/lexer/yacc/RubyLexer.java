@@ -44,7 +44,6 @@ import java.util.Map;
 
 import org.jcodings.Encoding;
 import org.jruby.Ruby;
-import org.jruby.RubySymbol;
 import org.jruby.ast.BackRefNode;
 import org.jruby.ast.BignumNode;
 import org.jruby.ast.ComplexNode;
@@ -58,7 +57,6 @@ import org.jruby.ast.RationalNode;
 import org.jruby.ast.StrNode;
 import org.jruby.common.IRubyWarnings;
 import org.jruby.common.IRubyWarnings.ID;
-import org.jruby.javasupport.ext.JavaLang;
 import org.jruby.lexer.LexerSource;
 import org.jruby.lexer.LexingCommon;
 import org.jruby.lexer.yacc.SyntaxException.PID;
@@ -1084,10 +1082,8 @@ public class RubyLexer extends LexingCommon {
 
     private int identifierToken(int result, ByteList value) {
         Ruby runtime = parserSupport.getConfiguration().getRuntime();
-        RubySymbol symbol = runtime.newSymbol(value);
-        String id = symbol.idString();
+        String id = runtime.newSymbol(value).idString();
 
-        if (result == RubyParser.tCONSTANT && !symbol.validConstantName()) result = RubyParser.tIDENTIFIER;
         if (result == RubyParser.tIDENTIFIER && !isLexState(last_state, EXPR_DOT|EXPR_FNAME) &&
                 parserSupport.getCurrentScope().isDefined(id) >= 0) {
             setState(EXPR_END|EXPR_LABEL);
@@ -1481,31 +1477,52 @@ public class RubyLexer extends LexingCommon {
             c = nextc();
         } while (isIdentifierChar(c));
 
-        int result = 0;
-        ByteList tempVal;
-        last_state = lex_state;
+        boolean lastBangOrPredicate = false;
 
         // methods 'foo!' and 'foo?' are possible but if followed by '=' it is relop
-        if ((c == '!' || c == '?') && !peek('=')) {
-            result = RubyParser.tFID;
-            tempVal = createTokenByteList();
-        } else if (c == '=' && isLexState(lex_state, EXPR_FNAME)) {
-            int c2 = nextc();
-            if (c2 != '~' && c2 != '>' && (c2 != '=' || peek('>'))) {
-                result = RubyParser.tIDENTIFIER;
-                pushback(c2);
+        if (c == '!' || c == '?') {
+            if (!peek('=')) {
+                lastBangOrPredicate = true;
             } else {
-                result = RubyParser.tCONSTANT;  // assume provisionally
-                pushback(c2);
                 pushback(c);
             }
-            tempVal = createTokenByteList();
         } else {
-            result = RubyParser.tCONSTANT;  // assume provisionally
             pushback(c);
-            tempVal = createTokenByteList();
         }
 
+        int result = 0;
+
+        last_state = lex_state;
+        ByteList tempVal;
+        if (lastBangOrPredicate) {
+            result = RubyParser.tFID;
+            tempVal = createTokenByteList();
+        } else {
+            if (isLexState(lex_state, EXPR_FNAME)) {
+                if ((c = nextc()) == '=') { 
+                    int c2 = nextc();
+
+                    if (c2 != '~' && c2 != '>' &&
+                            (c2 != '=' || peek('>'))) {
+                        result = RubyParser.tIDENTIFIER;
+                        pushback(c2);
+                    } else {
+                        pushback(c2);
+                        pushback(c);
+                    }
+                } else {
+                    pushback(c);
+                }
+            }
+            tempVal = createTokenByteList();
+
+            if (result == 0 && Character.isUpperCase(StringSupport.preciseCodePoint(getEncoding(), tempVal.unsafeBytes(), tempVal.begin(), tempVal.begin() + 1))) {
+                result = RubyParser.tCONSTANT;
+            } else {
+                result = RubyParser.tIDENTIFIER;
+            }
+        }
+        
         if (isLabelPossible(commandState)) {
             if (isLabelSuffix()) {
                 setState(EXPR_ARG|EXPR_LABELED);

@@ -237,7 +237,7 @@ final class CachingNativeMemoryAllocator {
 
     private static final class Bucket {
         final int size;
-        final Set<CacheElement> cache = new HashSet<CacheElement>();
+        Set<CacheElement> cache = new HashSet<CacheElement>();
 
         Bucket(int size) {
             this.size = roundUpToPowerOf2(size);
@@ -284,7 +284,7 @@ final class CachingNativeMemoryAllocator {
     }
 
     private static final class Allocator {
-        final AllocationGroup[] allocationGroups = new AllocationGroup[32];
+        AllocationGroup[] allocationGroups = new AllocationGroup[32];
 
         AllocatedMemoryIO allocate(Ruby runtime, int size, boolean clear) {
             MemoryAllocation allocation;

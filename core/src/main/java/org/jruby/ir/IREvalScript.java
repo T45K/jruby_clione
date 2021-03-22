@@ -16,7 +16,7 @@ public class IREvalScript extends IRClosure {
 
         this.fileName = fileName;
 
-        if (staticScope != null) {
+        if (!getManager().isDryRun() && staticScope != null) {
             // SSS FIXME: This is awkward!
             if (evalType == EvalType.MODULE_EVAL) {
                 staticScope.setScopeType(getScopeType());

@@ -30,9 +30,6 @@
 package org.jruby.internal.runtime.methods;
 
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-
 import org.jruby.RubyClass;
 import org.jruby.RubyModule;
 import org.jruby.runtime.ivars.VariableAccessor;
@@ -76,14 +73,9 @@ public class AttrWriterMethod extends JavaMethodOne {
     @Override
     public MethodData getMethodData() {
         if (methodData == null){
-            methodData = new MethodData(name, "dummyfile", Collections.singletonList(variableName));
+            methodData = new MethodData(name, "dummyfile", Arrays.asList(variableName));
         }
         return methodData;
-    }
-
-    @Override
-    public Collection<String> getInstanceVariableNames() {
-        return Collections.singletonList(variableName);
     }
 
     // Used by racc extension, needed for backward-compat with 1.7.

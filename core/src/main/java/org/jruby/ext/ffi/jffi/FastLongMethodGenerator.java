@@ -93,7 +93,6 @@ final class FastLongMethodGenerator extends AbstractNumericMethodGenerator {
             case ULONG:
             case LONG_LONG:
             case ULONG_LONG:
-//            case LONGDOUBLE:
             case POINTER:
                 return true;
 

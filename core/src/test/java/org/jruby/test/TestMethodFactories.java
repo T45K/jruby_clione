@@ -38,7 +38,7 @@ import org.jruby.runtime.ThreadContext;
 import org.jruby.runtime.builtin.IRubyObject;
 
 
-public class TestMethodFactories extends Base {
+public class TestMethodFactories extends TestRubyBase {
     public void setUp() {
         runtime = Ruby.newInstance();
     }

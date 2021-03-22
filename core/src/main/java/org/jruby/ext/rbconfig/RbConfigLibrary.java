@@ -39,7 +39,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.jcodings.Config;
 import org.jruby.Ruby;
 import org.jruby.RubyHash;
 import org.jruby.RubyModule;
@@ -252,7 +251,6 @@ public class RbConfigLibrary implements Library {
         setConfig(context, CONFIG, "bindir", binDir);
 
         setConfig(context, CONFIG, "RUBY_INSTALL_NAME", jrubyScript());
-        setConfig(context, CONFIG, "RUBY_BASE_NAME", jrubyScript());
         setConfig(context, CONFIG, "RUBYW_INSTALL_NAME", Platform.IS_WINDOWS ? "jrubyw.exe" : jrubyScript());
         setConfig(context, CONFIG, "ruby_install_name", jrubyScript());
         setConfig(context, CONFIG, "rubyw_install_name", Platform.IS_WINDOWS ? "jrubyw.exe" : jrubyScript());
@@ -334,11 +332,6 @@ public class RbConfigLibrary implements Library {
         setConfig(context, CONFIG, "sysconfdir", sysConfDir);
         setConfig(context, CONFIG, "localstatedir", newFile(normalizedHome, "var").getPath());
         setConfig(context, CONFIG, "DLEXT", "jar");
-        if (Platform.IS_WINDOWS) {
-            setConfig(context, CONFIG, "RUBY_SO_NAME", ((arch.equals("x86_64")) ? "x64-" : "") + "msvcrt-" + jrubyScript());
-        } else {
-            setConfig(context, CONFIG, "RUBY_SO_NAME", "ruby");
-        }
 
         final String rubygemsDir = getRubygemsDir(runtime);
         if (rubygemsDir != null) {
@@ -361,9 +354,6 @@ public class RbConfigLibrary implements Library {
 
         setConfig(context, CONFIG, "joda-time.version", Constants.JODA_TIME_VERSION);
         setConfig(context, CONFIG, "tzdata.version",    Constants.TZDATA_VERSION);
-
-        setConfig(context, CONFIG, "UNICODE_VERSION", Config.UNICODE_VERSION_STRING);
-        setConfig(context, CONFIG, "UNICODE_EMOJI_VERSION", Config.UNICODE_EMOJI_VERSION_STRING);
 
         rbConfig.defineConstant("CONFIG", CONFIG);
 

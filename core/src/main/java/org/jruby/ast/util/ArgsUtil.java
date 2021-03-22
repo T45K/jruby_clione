@@ -95,12 +95,8 @@ public final class ArgsUtil {
     }
 
     public static IRubyObject getOptionsArg(Ruby runtime, IRubyObject arg) {
-        return getOptionsArg(runtime, arg, true);
-    }
-
-    public static IRubyObject getOptionsArg(Ruby runtime, IRubyObject arg, boolean raise) {
         if (arg == null) return runtime.getNil();
-        return TypeConverter.checkHashType(runtime, arg, raise);
+        return TypeConverter.checkHashType(runtime, arg);
     }
 
     private static final IRubyObject[] NULL_1 = new IRubyObject[] { null };
@@ -149,16 +145,10 @@ public final class ArgsUtil {
 
     // not used
     public static IRubyObject[] extractKeywordArgs(ThreadContext context, IRubyObject[] args, String... validKeys) {
-        return extractKeywordArgs(context, ArgsUtil.getOptionsArg(context.runtime, args), validKeys);
-    }
-
-    public static IRubyObject[] extractKeywordArgs(ThreadContext context, IRubyObject maybeKwargs, String... validKeys) {
-        IRubyObject options = ArgsUtil.getOptionsArg(context.runtime, maybeKwargs);
-
+        IRubyObject options = ArgsUtil.getOptionsArg(context.runtime, args);
         if (options instanceof RubyHash) {
             return extractKeywordArgs(context, (RubyHash) options, validKeys);
         }
-
         return null;
     }
 

@@ -55,10 +55,8 @@ import java.util.Set;
 import jnr.constants.platform.Errno;
 import jnr.constants.platform.Fcntl;
 import jnr.constants.platform.OpenFlags;
-import jnr.constants.platform.PosixFadvise;
 import jnr.enxio.channels.NativeDeviceChannel;
 import jnr.enxio.channels.NativeSelectableChannel;
-import jnr.posix.Linux;
 import jnr.posix.POSIX;
 
 import org.jcodings.Encoding;
@@ -895,9 +893,7 @@ public class RubyIO extends RubyObject implements IOEncodable, Closeable, Flusha
             fd = runtime.getFilenoUtil().getWrapperFromFileno(fileno);
 
             if (fd == null) {
-                if (runtime.getPosix().isNative() && !Platform.IS_WINDOWS) {
-                    fd = new ChannelFD(new NativeDeviceChannel(fileno), runtime.getPosix(), runtime.getFilenoUtil());
-                } else {
+                if (Platform.IS_WINDOWS) {
                     // Native channels don't work quite right on Windows yet. Override standard io for better nonblocking support. See jruby/jruby#3625
                     switch (fileno) {
                         case 0:
@@ -913,6 +909,8 @@ public class RubyIO extends RubyObject implements IOEncodable, Closeable, Flusha
                             fd = new ChannelFD(new NativeDeviceChannel(fileno), runtime.getPosix(), runtime.getFilenoUtil());
                             break;
                     }
+                } else {
+                    fd = new ChannelFD(new NativeDeviceChannel(fileno), runtime.getPosix(), runtime.getFilenoUtil());
                 }
             }
         } else {
@@ -2797,8 +2795,8 @@ public class RubyIO extends RubyObject implements IOEncodable, Closeable, Flusha
         try {
             fptr.checkByteReadable(context);
             if (b.isNil()) return context.nil;
-            if (b instanceof RubyInteger) {
-                byte cc = (byte) ((RubyInteger) b.convertToInteger().op_mod(context, 256)).getIntValue();
+            if (b instanceof RubyFixnum) {
+                byte cc = (byte) RubyNumeric.fix2int(b);
                 b = RubyString.newStringNoCopy(context.runtime, new byte[]{cc});
             } else {
                 b = b.convertToString();
@@ -3557,7 +3555,6 @@ public class RubyIO extends RubyObject implements IOEncodable, Closeable, Flusha
     // MRI: rb_io_advise
     @JRubyMethod(required = 1, optional = 2)
     public IRubyObject advise(ThreadContext context, IRubyObject[] argv) {
-        Ruby runtime = context.runtime;
         IRubyObject advice, offset, len;
         advice = offset = len = context.nil;
         OpenFile fptr;
@@ -3570,48 +3567,32 @@ public class RubyIO extends RubyObject implements IOEncodable, Closeable, Flusha
             case 1:
                 advice = argv[0];
         }
-
-        PosixFadvise fadvise = adviceArgCheck(context, advice);
-
-        int off = offset.isNil() ? 0 : offset.convertToInteger().getIntValue();
-        int l = len.isNil() ? 0 : len.convertToInteger().getIntValue();
-
-        POSIX posix = runtime.getNativePosix();
-
-        if (!(posix instanceof Linux)) {
-            return context.nil;
-        }
+        adviceArgCheck(context, advice);
 
         RubyIO io = GetWriteIO();
-
         fptr = io.getOpenFileChecked();
-
-        int fd = fptr.fd().realFileno;
-
-        if (fd == -1) {
-            // TODO: may be able to manipulate some types of channels
-            return context.nil;
-        }
 
         boolean locked = fptr.lock();
         try {
-            int res = ((Linux) posix).posix_fadvise(fd, off, l, fadvise);
+            int off = offset.isNil() ? 0 : offset.convertToInteger().getIntValue();
+            int l = len.isNil() ? 0 : len.convertToInteger().getIntValue();
 
-            if (res != 0) {
-                throw runtime.newErrnoFromInt(posix.errno(), "posix_fadvise");
-            }
+            // TODO: implement advise
+            //        #ifdef HAVE_POSIX_FADVISE
+            //        return do_io_advise(fptr, advice, off, l);
+            //        #else
+            //        ((void)off, (void)l);	/* Ignore all hint */
+            return context.nil;
+            //        #endif
         } finally {
             if (locked) fptr.unlock();
         }
-
-        return context.nil;
     }
 
     // MRI: advice_arg_check
-    static PosixFadvise adviceArgCheck(ThreadContext context, IRubyObject advice) {
-        if (!(advice instanceof RubySymbol)) {
+    static void adviceArgCheck(ThreadContext context, IRubyObject advice) {
+        if (!(advice instanceof RubySymbol))
             throw context.runtime.newTypeError("advise must be a symbol");
-        }
 
         String adviceStr = advice.asJavaString();
         switch (adviceStr) {
@@ -3624,8 +3605,7 @@ public class RubyIO extends RubyObject implements IOEncodable, Closeable, Flusha
             case "willneed":
             case "dontneed":
             case "noreuse":
-                String adviceString = advice.toString();
-                return PosixFadvise.valueOf("POSIX_FADV_" + adviceString.toUpperCase());
+                // ok
         }
     }
 

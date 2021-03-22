@@ -338,7 +338,7 @@ public abstract class RubyToJavaInvoker<T extends JavaCallable> extends JavaMeth
 
     static <T extends AccessibleObject & Member> T setAccessible(T accessible) {
         // TODO: Replace flag that's false on 9 with proper module checks
-        if (!Java.isAccessible(accessible) &&
+        if (!accessible.isAccessible() &&
                 !Ruby.isSecurityRestricted() &&
                 Options.JI_SETACCESSIBLE.load() &&
                 accessible instanceof Member) {
@@ -357,7 +357,7 @@ public abstract class RubyToJavaInvoker<T extends JavaCallable> extends JavaMeth
                 Options.JI_SETACCESSIBLE.load()) {
             try {
                 for (T accessible : accessibles) {
-                    if (Java.isAccessible(accessible)) continue;
+                    if (accessible.isAccessible()) continue;
                     if (!(accessible instanceof Member)) continue;
 
                     Java.trySetAccessible(accessible);
@@ -379,6 +379,16 @@ public abstract class RubyToJavaInvoker<T extends JavaCallable> extends JavaMeth
             // throw all other RuntimeException
             throw re;
         }
+    }
+
+    private static <T extends AccessibleObject> boolean allAreAccessible(T[] accessibles) {
+        for (T accessible : accessibles) if (!accessible.isAccessible()) return false;
+        return true;
+    }
+
+    private static <T extends AccessibleObject> boolean allAreMember(T[] accessibles) {
+        for (T accessible : accessibles) if (!(accessible instanceof Member)) return false;
+        return true;
     }
 
     protected T findCallable(IRubyObject self, String name, IRubyObject[] args, final int arity) {
@@ -660,7 +670,7 @@ public abstract class RubyToJavaInvoker<T extends JavaCallable> extends JavaMeth
         }
 
         // TODO should have been ArgumentError - might break users to refactor at this point
-        return runtime.newNameError(error.toString(), (String) null);
+        return runtime.newNameError(error.toString(), null);
     }
 
     private RaiseException newErrorDueNoMatchingCallable(final IRubyObject receiver, final String name) {

@@ -14,12 +14,15 @@ import org.jruby.RubyClass;
 import org.jruby.runtime.builtin.IRubyObject;
 
 /**
- * An allocator for a Ruby object.
+ *
+ * @author headius
  */
 public interface ObjectAllocator {
-    IRubyObject allocate(Ruby runtime, RubyClass klazz);
+    public IRubyObject allocate(Ruby runtime, RubyClass klazz);
     
-    ObjectAllocator NOT_ALLOCATABLE_ALLOCATOR = (runtime, klass) -> {
-        throw runtime.newTypeError("allocator undefined for " + klass.getName());
+    public static final ObjectAllocator NOT_ALLOCATABLE_ALLOCATOR = new ObjectAllocator() {
+        public IRubyObject allocate(Ruby runtime, RubyClass klass) {
+            throw runtime.newTypeError("allocator undefined for " + klass.getName());
+        }
     };
 }

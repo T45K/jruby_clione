@@ -44,7 +44,7 @@ import org.jruby.lexer.yacc.ISourcePosition;
  * Represents an instance variable accessor.
  */
 public class InstVarNode extends Node implements INameNode, SideEffectFree {
-    private final RubySymbol name;
+    private RubySymbol name;
 
     public InstVarNode(ISourcePosition position, RubySymbol name) {
         super(position, false);

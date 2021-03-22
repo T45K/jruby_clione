@@ -35,7 +35,6 @@ public class DataConverters {
                 case ULONG:
                 case LONG_LONG:
                 case ULONG_LONG:
-//                case LONGDOUBLE:
                     return true;
                     
                 default:
@@ -58,7 +57,6 @@ public class DataConverters {
                 case ULONG:
                 case LONG_LONG:
                 case ULONG_LONG:
-//                case LONGDOUBLE:
                     return true;
                     
                 default:

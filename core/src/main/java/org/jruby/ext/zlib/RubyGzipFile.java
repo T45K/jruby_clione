@@ -313,7 +313,7 @@ public class RubyGzipFile extends RubyObject implements IOEncodable {
     protected boolean closed = false;
     protected boolean finished = false;
     protected boolean hasBOM;
-    protected final byte osCode = Zlib.OS_UNKNOWN;
+    protected byte osCode = Zlib.OS_UNKNOWN;
     protected int level = -1;
     protected RubyString nullFreeOrigName;
     protected RubyString nullFreeComment;

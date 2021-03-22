@@ -30,7 +30,7 @@ import org.jruby.util.ByteList;
  */
 public class IRWriterAnalyzer implements IRWriterEncoder {
     private int currentOffsetId = 0;
-    private final Map<IRScope, Integer> offsetIds = new HashMap();
+    private final Map<String, Integer> offsetIds = new HashMap<String, Integer>();
 
     // Figure out most commonly used operands for eventual creation of an operand pool
     private final Map<Operand, Integer> operandCounts = new HashMap<Operand, Integer>();
@@ -40,11 +40,6 @@ public class IRWriterAnalyzer implements IRWriterEncoder {
         for (Operand operand: instr.getOperands()) {
             increment(operand);
         }
-    }
-
-    @Override
-    public boolean isAnalyzer() {
-        return true;
     }
 
     @Override
@@ -159,7 +154,7 @@ public class IRWriterAnalyzer implements IRWriterEncoder {
 
     @Override
     public void startEncodingScopeInstrs(IRScope scope) {
-        offsetIds.put(scope, currentOffsetId++);
+        offsetIds.put(scope.toString(), currentOffsetId++);
     }
 
     @Override
@@ -190,7 +185,7 @@ public class IRWriterAnalyzer implements IRWriterEncoder {
     }
 
     public int getScopeID(IRScope value) {
-        return offsetIds.get(value);
+        return offsetIds.get(value.toString());
     }
 
     public int getScopeCount() {

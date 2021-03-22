@@ -53,7 +53,7 @@ import org.jruby.runtime.builtin.IRubyObject;
 public class JRubyEngine implements Compilable, Invocable, ScriptEngine {
 
     final ScriptingContainer container;
-    private final JRubyEngineFactory factory;
+    private JRubyEngineFactory factory;
     private ScriptContext context;
 
     JRubyEngine(ScriptingContainer container, JRubyEngineFactory factory) {

@@ -44,14 +44,12 @@ import org.jruby.RubyArray;
 import org.jruby.RubyBoolean;
 import org.jruby.RubyClass;
 import org.jruby.RubyContinuation;
-import org.jruby.RubyProc;
 import org.jruby.exceptions.CatchThrow;
 import org.jruby.RubyInstanceConfig;
 import org.jruby.RubyModule;
 import org.jruby.RubyRegexp;
 import org.jruby.RubyThread;
 import org.jruby.ast.executable.RuntimeCache;
-import org.jruby.exceptions.TypeError;
 import org.jruby.exceptions.Unrescuable;
 import org.jruby.ext.fiber.ThreadFiber;
 import org.jruby.internal.runtime.methods.DynamicMethod;
@@ -79,7 +77,6 @@ import java.util.IdentityHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Supplier;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -105,10 +102,6 @@ public final class ThreadContext {
     public final RubyBoolean tru;
     public final RubyBoolean fals;
     public final RuntimeCache runtimeCache;
-
-    // Thread#set_trace_func for specific threads events.  We need this because successive
-    // Thread.set_trace_funcs will end up replacing the current one (as opposed to add_trace_func).
-    private Ruby.CallTraceFuncHook traceFuncHook = null;
 
     // Is this thread currently with in a function trace?
     private boolean isWithinTrace;
@@ -164,8 +157,6 @@ public final class ThreadContext {
 
     private static boolean tryPreferredPRNG = true;
     private static boolean trySHA1PRNG = true;
-
-    private RubyModule privateConstantReference;
 
     public final JavaSites sites;
 
@@ -1259,49 +1250,6 @@ public final class ThreadContext {
 
     private Map<String, Map<IRubyObject, IRubyObject>> symToGuards;
 
-    // Thread#set_trace_func of nil will not only remove the one via set_trace_func but also any which
-    // were added via add_trace_func.
-    public IRubyObject clearThreadTraceFunctions() {
-        // We called Thread#set_trace_func.  Remove it here since all thread trace funcs are going away.
-        if (traceFuncHook != null) traceFuncHook = null;
-
-        runtime.removeAllCallEventHooksFor(this);
-
-        return nil;
-    }
-
-    public IRubyObject addThreadTraceFunction(IRubyObject trace_func, boolean useContextHook) {
-        if (!(trace_func instanceof RubyProc)) throw runtime.newTypeError("trace_func needs to be Proc.");
-
-        Ruby.CallTraceFuncHook hook;
-
-        if (useContextHook) {
-            hook = traceFuncHook;
-            if (hook == null) {
-                hook = new Ruby.CallTraceFuncHook(this);
-                traceFuncHook = hook;
-            }
-        } else {
-            hook = new Ruby.CallTraceFuncHook(this);
-        }
-        runtime.setTraceFunction(hook, (RubyProc) trace_func);
-
-        return trace_func;
-    }
-
-
-    public IRubyObject setThreadTraceFunction(IRubyObject trace_func) {
-        return addThreadTraceFunction(trace_func, true);
-    }
-
-    public void setPrivateConstantReference(RubyModule privateConstantReference) {
-        this.privateConstantReference = privateConstantReference;
-    }
-
-    public RubyModule getPrivateConstantReference() {
-        return privateConstantReference;
-    }
-
     private static class RecursiveError extends Error implements Unrescuable {
         public RecursiveError(Object tag) {
             this.tag = tag;
@@ -1390,5 +1338,20 @@ public final class ThreadContext {
     public Encoding[] encodingHolder() {
         if (encodingHolder == null) encodingHolder = new Encoding[1];
         return encodingHolder;
+    }
+
+    @Deprecated
+    public void setFile(String file) {
+        backtrace[backtraceIndex].filename = file;
+    }
+
+    @Deprecated
+    private org.jruby.util.RubyDateFormat dateFormat;
+
+    @Deprecated
+    public org.jruby.util.RubyDateFormat getRubyDateFormat() {
+        if (dateFormat == null) dateFormat = new org.jruby.util.RubyDateFormat("-", Locale.US);
+
+        return dateFormat;
     }
 }

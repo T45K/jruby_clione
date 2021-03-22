@@ -69,8 +69,15 @@ public class RubyNil extends RubyObject implements Constantizable {
         constant = OptoFactory.newConstantWrapper(IRubyObject.class, this);
     }
     
+    public static final ObjectAllocator NIL_ALLOCATOR = new ObjectAllocator() {
+        @Override
+        public IRubyObject allocate(Ruby runtime, RubyClass klass) {
+            throw runtime.newTypeError("allocator undefined for NilClass");
+        }
+    };
+    
     public static RubyClass createNilClass(Ruby runtime) {
-        RubyClass nilClass = runtime.defineClass("NilClass", runtime.getObject(), ObjectAllocator.NOT_ALLOCATABLE_ALLOCATOR);
+        RubyClass nilClass = runtime.defineClass("NilClass", runtime.getObject(), NIL_ALLOCATOR);
 
         nilClass.setClassIndex(ClassIndex.NIL);
         nilClass.setReifiedClass(RubyNil.class);
@@ -169,12 +176,6 @@ public class RubyNil extends RubyObject implements Constantizable {
         return RubyString.newStringShared(runtime, runtime.getString(), nil);
     }
 
-    @Override
-    @JRubyMethod(name = "=~", required = 1)
-    public IRubyObject op_match(ThreadContext context, IRubyObject arg) {
-        return this; // nil
-    }
-
     /** nil_and
      *
      */
@@ -199,7 +200,6 @@ public class RubyNil extends RubyObject implements Constantizable {
         return RubyBoolean.newBoolean(context, obj.isTrue());
     }
 
-    @Override
     @JRubyMethod(name = "nil?")
     public RubyBoolean nil_p(ThreadContext context) {
         return context.tru;
@@ -274,7 +274,4 @@ public class RubyNil extends RubyObject implements Constantizable {
         }
         return null;
     }
-
-    @Deprecated
-    public static final ObjectAllocator NIL_ALLOCATOR = ObjectAllocator.NOT_ALLOCATABLE_ALLOCATOR;
 }
