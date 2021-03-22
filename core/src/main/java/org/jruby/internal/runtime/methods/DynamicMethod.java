@@ -33,9 +33,6 @@ package org.jruby.internal.runtime.methods;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Method;
-import java.util.Collection;
-import java.util.Collections;
-
 import org.jruby.MetaClass;
 import org.jruby.PrependedModule;
 import org.jruby.RubyModule;
@@ -529,10 +526,6 @@ public abstract class DynamicMethod {
      */
     public MethodData getMethodData() {
         return MethodData.NULL;
-    }
-
-    public Collection<String> getInstanceVariableNames() {
-        return Collections.EMPTY_LIST;
     }
     
     /**

@@ -3,6 +3,7 @@ package org.jruby.runtime;
 import java.io.ByteArrayOutputStream;
 
 import org.jruby.Ruby;
+import org.jruby.RubyInstanceConfig;
 import org.jruby.RubyModule;
 import org.jruby.compiler.Compilable;
 import org.jruby.ir.IRClosure;
@@ -18,19 +19,17 @@ import org.jruby.util.log.LoggerFactory;
 
 public class InterpretedIRBlockBody extends IRBlockBody implements Compilable<InterpreterContext> {
     private static final Logger LOG = LoggerFactory.getLogger(InterpretedIRBlockBody.class);
-    protected final boolean pushScope;
-    protected final boolean reuseParentScope;
+    protected boolean pushScope;
+    protected boolean reuseParentScope;
     private boolean displayedCFG = false; // FIXME: Remove when we find nicer way of logging CFG
     private int callCount = 0;
     private InterpreterContext interpreterContext;
     private InterpreterContext fullInterpreterContext;
-    private final IRClosure closure;
 
     public InterpretedIRBlockBody(IRClosure closure, Signature signature) {
         super(closure, signature);
         this.pushScope = true;
         this.reuseParentScope = false;
-        this.closure = closure;
 
         // -1 jit.threshold is way of having interpreter not promote full builds
         // regardless of compile mode (even when OFF full-builds are promoted)
@@ -160,11 +159,6 @@ public class InterpretedIRBlockBody extends IRBlockBody implements Compilable<In
 
     public RubyModule getImplementationClass() {
         return closure.getStaticScope().getModule();
-    }
-
-    @Override
-    public IRClosure getScope() {
-        return closure;
     }
 
 }

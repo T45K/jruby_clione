@@ -14,6 +14,7 @@ public class MethodBlockBody extends ContextAwareBlockBody {
     private final CacheEntry entry;
     private final ArgumentDescriptor[] argsDesc;
     private final IRubyObject receiver;
+    private final RubyModule originModule;
     private final String originName;
     private final String file;
     private final int line;
@@ -25,6 +26,7 @@ public class MethodBlockBody extends ContextAwareBlockBody {
         this.entry = entry;
         this.argsDesc = argsDesc;
         this.receiver = receiver;
+        this.originModule = originModule;
         this.originName = originName;
         this.file = file;
         this.line = line;

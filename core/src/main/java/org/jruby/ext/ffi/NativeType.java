@@ -50,7 +50,6 @@ public enum NativeType {
     ULONG,
     FLOAT,
     DOUBLE,
-    LONGDOUBLE,
     POINTER,
     BUFFER_IN,
     BUFFER_OUT,

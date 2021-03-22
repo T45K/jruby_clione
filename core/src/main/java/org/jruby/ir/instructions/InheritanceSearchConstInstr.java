@@ -8,7 +8,6 @@ import org.jruby.ir.Operation;
 import org.jruby.ir.operands.*;
 import org.jruby.ir.persistence.IRReaderDecoder;
 import org.jruby.ir.persistence.IRWriterEncoder;
-import org.jruby.ir.targets.simple.ConstantLookupSite;
 import org.jruby.ir.transformations.inlining.CloneInfo;
 import org.jruby.parser.StaticScope;
 import org.jruby.runtime.DynamicScope;
@@ -26,7 +25,7 @@ public class InheritanceSearchConstInstr extends OneOperandResultBaseInstr imple
     private RubySymbol constName;
 
     // Constant caching
-    private final ConstantLookupSite site;
+    private volatile transient ConstantCache cache;
 
     public InheritanceSearchConstInstr(Variable result, Operand currentModule, RubySymbol constName) {
         super(Operation.INHERITANCE_SEARCH_CONST, result, currentModule);
@@ -34,7 +33,6 @@ public class InheritanceSearchConstInstr extends OneOperandResultBaseInstr imple
         assert result != null: "InheritanceSearchConstInstr result is null";
 
         this.constName = constName;
-        this.site = new ConstantLookupSite(constName);
     }
 
     public Operand getCurrentModule() {
@@ -64,6 +62,19 @@ public class InheritanceSearchConstInstr extends OneOperandResultBaseInstr imple
         return new String[] { "name: " + getName() };
     }
 
+    private Object cache(Ruby runtime, RubyModule module) {
+        String id = getId();
+        Object constant = module.getConstantNoConstMissingSkipAutoload(id);
+        if (constant == null) {
+            constant = UndefinedValue.UNDEFINED;
+        } else {
+            // recache
+            Invalidator invalidator = runtime.getConstantInvalidator(id);
+            cache = new ConstantCache((IRubyObject)constant, invalidator.getData(), invalidator, module.hashCode());
+        }
+        return constant;
+    }
+
     @Override
     public void encode(IRWriterEncoder e) {
         super.encode(e);
@@ -79,7 +90,12 @@ public class InheritanceSearchConstInstr extends OneOperandResultBaseInstr imple
     public Object interpret(ThreadContext context, StaticScope currScope, DynamicScope currDynScope, IRubyObject self, Object[] temp) {
         Object cmVal = getCurrentModule().retrieve(context, self, currScope, currDynScope, temp);
 
-        return site.inheritanceSearchConst(context, (IRubyObject) cmVal);
+        if (!(cmVal instanceof RubyModule)) throw context.runtime.newTypeError(cmVal + " is not a type/class");
+
+        RubyModule module = (RubyModule) cmVal;
+        ConstantCache cache = this.cache;
+
+        return !ConstantCache.isCachedFrom(module, cache) ? cache(context.runtime, module) : cache.value;
     }
 
     @Override

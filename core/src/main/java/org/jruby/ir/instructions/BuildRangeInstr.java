@@ -19,7 +19,7 @@ import org.jruby.runtime.builtin.IRubyObject;
 // Further down the line, this range operand could get converted to calls
 // that actually build the BuildRangeInstr object
 public class BuildRangeInstr extends TwoOperandResultBaseInstr {
-    private final boolean exclusive;
+    private boolean exclusive;
 
     public BuildRangeInstr(Variable result, Operand begin, Operand end, boolean exclusive) {
         super(Operation.BUILD_RANGE, result, begin, end);

@@ -53,6 +53,7 @@ public abstract class ObjectProxyCache<T,A> {
     private final Segment<T,A>[] segments;
     private final int segmentShift;
     private final int segmentMask;
+    private Thread vulture;
     private final int id;
 
     public ObjectProxyCache() {
@@ -103,9 +104,8 @@ public abstract class ObjectProxyCache<T,A> {
         //
         // FIXME: DISABLED (below) pending resolution of finalization issue
         //
-        Thread vulture;
         try {
-            vulture = new Thread("ObjectProxyCache "+id+" vulture") {
+            this.vulture = new Thread("ObjectProxyCache "+id+" vulture") {
                     public void run() {
                         for ( ;; ) {
                             try {
@@ -124,7 +124,7 @@ public abstract class ObjectProxyCache<T,A> {
                                 } finally {
                                     seg.unlock();
                                 }
-                                Thread.yield();
+                                yield();
                             }
                             if (dump) {
                                 LOG.debug("***Vulture {} sleeping, stats:", id);
@@ -135,7 +135,7 @@ public abstract class ObjectProxyCache<T,A> {
                 };
             vulture.setDaemon(true);
         } catch (SecurityException e) {
-            vulture = null;
+            this.vulture = null;
         }
 
 

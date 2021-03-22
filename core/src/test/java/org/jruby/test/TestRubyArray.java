@@ -37,7 +37,7 @@ import org.jruby.RubyArray;
 /**
  * Test case for functionality in RubyArray
  */
-public class TestRubyArray extends Base {
+public class TestRubyArray extends TestRubyBase {
     private String result;
 
     public TestRubyArray(final String name) {

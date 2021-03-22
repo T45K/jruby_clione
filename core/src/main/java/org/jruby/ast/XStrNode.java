@@ -43,7 +43,7 @@ import org.jruby.util.ByteList;
  */
 public class XStrNode extends Node implements ILiteralNode {
     private final ByteList value;
-    private final int coderange;
+    private int coderange;
 
     public XStrNode(ISourcePosition position, ByteList value, int coderange) {
         // FIXME: Shouldn't this have codeRange like StrNode?

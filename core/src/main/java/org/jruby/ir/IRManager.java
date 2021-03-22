@@ -13,7 +13,6 @@ import org.jruby.ast.IScopingNode;
 import org.jruby.ast.ModuleNode;
 import org.jruby.ast.Node;
 import org.jruby.ast.RootNode;
-import org.jruby.ext.coverage.CoverageData;
 import org.jruby.ir.instructions.LineNumberInstr;
 import org.jruby.ir.instructions.ReceiveSelfInstr;
 import org.jruby.ir.instructions.ToggleBacktraceInstr;
@@ -50,9 +49,9 @@ public class IRManager {
     public static final String DEFAULT_JIT_PASSES = "LocalOptimizationPass,DeadCodeElimination,OptimizeDynScopesPass,OptimizeDelegationPass,AddCallProtocolInstructions,AddMissingInitsPass";
     public static final String DEFAULT_INLINING_COMPILER_PASSES = "LocalOptimizationPass";
     
-    public static final boolean IR_INLINER = Options.IR_INLINER.load();
-    public static final int IR_INLINER_THRESHOLD = Options.IR_INLINER_THRESHOLD.load();
-    public static final boolean IR_INLINER_VERBOSE = Options.IR_INLINER_VERBOSE.load();
+    public static boolean IR_INLINER = Options.IR_INLINER.load();
+    public static int IR_INLINER_THRESHOLD = Options.IR_INLINER_THRESHOLD.load();
+    public static boolean IR_INLINER_VERBOSE = Options.IR_INLINER_VERBOSE.load();
 
     private final CompilerPass deadCodeEliminationPass = new DeadCodeElimination();
     private final CompilerPass optimizeDynScopesPass = new OptimizeDynScopesPass();
@@ -70,19 +69,22 @@ public class IRManager {
     public final ToggleBacktraceInstr needsNoBacktrace = new ToggleBacktraceInstr(false);
 
     // Listeners for debugging and testing of IR
-    private final Set<CompilerPassListener> passListeners = new HashSet<CompilerPassListener>();
-    private final CompilerPassListener defaultListener = new BasicCompilerPassListener();
+    private Set<CompilerPassListener> passListeners = new HashSet<CompilerPassListener>();
+    private CompilerPassListener defaultListener = new BasicCompilerPassListener();
 
     private InstructionsListener instrsListener = null;
     private IRScopeListener irScopeListener = null;
 
     // FIXME: Eventually make these attrs into either a) set b) part of state machine
-    private final List<CompilerPass> compilerPasses;
-    private final List<CompilerPass> inliningCompilerPasses;
-    private final List<CompilerPass> jitPasses;
-    private final List<CompilerPass> safePasses;
+    private List<CompilerPass> compilerPasses;
+    private List<CompilerPass> inliningCompilerPasses;
+    private List<CompilerPass> jitPasses;
+    private List<CompilerPass> safePasses;
     private final RubyInstanceConfig config;
     public final Ruby runtime;
+
+    // If true then code will not execute (see ir/ast tool)
+    private boolean dryRun = false;
 
     public IRManager(Ruby runtime, RubyInstanceConfig config) {
         this.runtime = runtime;
@@ -98,6 +100,14 @@ public class IRManager {
 
     public Ruby getRuntime() {
         return runtime;
+    }
+
+    public boolean isDryRun() {
+        return dryRun;
+    }
+
+    public void setDryRun(boolean value) {
+        this.dryRun = value;
     }
 
     public Nil getNil() {
@@ -130,7 +140,7 @@ public class IRManager {
 
     public static CompilerPassScheduler schedulePasses(final List<CompilerPass> passes) {
         CompilerPassScheduler scheduler = new CompilerPassScheduler() {
-            private final Iterator<CompilerPass> iterator;
+            private Iterator<CompilerPass> iterator;
             {
                 this.iterator = passes.iterator();
             }
@@ -211,8 +221,8 @@ public class IRManager {
         }
     }
 
-    private static final int CLOSURE_PREFIX_CACHE_SIZE = 300; // arbtrary.  one library in rails 6 uses over 270 in one scope...
-    private final String[] closurePrefixCache = new String[CLOSURE_PREFIX_CACHE_SIZE];
+    private static int CLOSURE_PREFIX_CACHE_SIZE = 300; // arbtrary.  one library in rails 6 uses over 270 in one scope...
+    private String[] closurePrefixCache = new String[CLOSURE_PREFIX_CACHE_SIZE];
 
     public String getClosurePrefix(int closureId) {
         if (closureId >= CLOSURE_PREFIX_CACHE_SIZE) {
@@ -230,8 +240,8 @@ public class IRManager {
     }
 
 
-    private static final int FIXNUM_CACHE_HALF_SIZE = 16384;
-    private final Fixnum[] fixnums = new Fixnum[2 * FIXNUM_CACHE_HALF_SIZE];
+    private static int FIXNUM_CACHE_HALF_SIZE = 16384;
+    private Fixnum fixnums[] = new Fixnum[2 * FIXNUM_CACHE_HALF_SIZE];
 
     // Fixnum operand caches end up providing twice the value since it will share the same instance of
     // the same logical fixnum, but since immutable literals cache the actual RubyFixnum they end up
@@ -272,7 +282,7 @@ public class IRManager {
 
     }
 
-    private final ReceiveSelfInstr receiveSelfInstr = new ReceiveSelfInstr(Self.SELF);
+    private ReceiveSelfInstr receiveSelfInstr = new ReceiveSelfInstr(Self.SELF);
 
     public ReceiveSelfInstr getReceiveSelfInstr() {
         return receiveSelfInstr;
@@ -371,7 +381,7 @@ public class IRManager {
             } else {
                 containingScope = new IRClassBody(this, script, scopeNode.getCPath().getName().getBytes(), 0, scopeNode.getScope(), false);
             }
-            IRMethod newMethod = new IRMethod(this, containingScope, defNode, context.runtime.newSymbol(method).getBytes(), true, 0, defNode.getScope(), CoverageData.NONE);
+            IRMethod newMethod = new IRMethod(this, containingScope, defNode, context.runtime.newSymbol(method).getBytes(), true, 0, defNode.getScope(), false);
 
             newMethod.prepareForCompilation();
 

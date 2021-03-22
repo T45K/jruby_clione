@@ -83,11 +83,7 @@ public class BuildDynRegExpInstr extends NOperandResultBaseInstr {
         int length = operands.length;
         RubyString[] strings = new RubyString[length];
         for (int i = 0; i < length; i++) {
-            IRubyObject value = (IRubyObject) operands[i].retrieve(context, self, currScope, currDynScope, temp);
-
-            // TODO: optimize the to_s call this does
-            strings[i] = value.asString();
-
+            strings[i] = (RubyString) operands[i].retrieve(context, self, currScope, currDynScope, temp);
         }
         return strings;
     }

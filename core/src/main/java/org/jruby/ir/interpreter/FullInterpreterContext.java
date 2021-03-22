@@ -41,7 +41,7 @@ import static org.jruby.ir.IRFlags.BINDING_HAS_ESCAPED;
  * Created by enebo on 2/27/15.
  */
 public class FullInterpreterContext extends InterpreterContext {
-    private final CFG cfg;
+    private CFG cfg;
 
     // Creation of this field will happen in generateInstructionsForInterpretation or during IRScope.prepareForCompilation.
     // FIXME: At some point when we relinearize after running another phase of passes we should document that here to know how this field is changed
@@ -51,7 +51,7 @@ public class FullInterpreterContext extends InterpreterContext {
     private Map<String, DataFlowProblem> dataFlowProblems;
 
     /** What passes have been run on this scope? */
-    private final List<CompilerPass> executedPasses = new ArrayList<>();
+    private List<CompilerPass> executedPasses = new ArrayList<>();
 
 
     /** Local variables defined in this scope */

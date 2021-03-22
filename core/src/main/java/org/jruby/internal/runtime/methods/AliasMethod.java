@@ -1,5 +1,4 @@
-/*
- **** BEGIN LICENSE BLOCK *****
+/***** BEGIN LICENSE BLOCK *****
  * Version: EPL 2.0/GPL 2.0/LGPL 2.1
  *
  * The contents of this file are subject to the Eclipse Public
@@ -34,6 +33,9 @@ package org.jruby.internal.runtime.methods;
 
 import org.jruby.RubyModule;
 import org.jruby.internal.runtime.AbstractIRMethod;
+import org.jruby.ir.IRFlags;
+import org.jruby.ir.IRMethod;
+import org.jruby.ir.IRScope;
 import org.jruby.runtime.Arity;
 import org.jruby.runtime.Block;
 import org.jruby.runtime.Helpers;
@@ -68,7 +70,18 @@ public class AliasMethod extends DynamicMethod {
         // frame class to be available).
         // TODO: general support for DynamicMethod.needsClass etc, so we can easily make this determination.
         if (entry.method instanceof AbstractIRMethod) {
-            findImplementer = ((AbstractIRMethod) entry.method).needsToFindImplementer();
+            AbstractIRMethod irMethod = (AbstractIRMethod) entry.method;
+
+            // Ensure scope is ready for flags
+            irMethod.ensureInstrsReady();
+
+            IRScope irScope = irMethod.getIRScope();
+            // FIXME: This flag check is safe based on the current design since once requires_class is toggled it will
+            //  not untoggle and fullinterpcontext inherits fields of interpretercontext.
+            if (irScope instanceof IRMethod
+                    && !irScope.getInterpreterContext().getFlags().contains(IRFlags.REQUIRES_CLASS)) {
+                findImplementer = false;
+            }
         }
 
         this.findImplementer = findImplementer;

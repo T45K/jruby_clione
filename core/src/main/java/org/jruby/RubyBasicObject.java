@@ -1221,9 +1221,8 @@ public class RubyBasicObject implements Cloneable, IRubyObject, Serializable, Co
         boolean first = true;
         for (Map.Entry<String, VariableAccessor> entry : metaClass.getVariableTableManager().getVariableAccessorsForRead().entrySet()) {
             Object value = entry.getValue().get(this);
-            if (!(value instanceof IRubyObject)) continue;
             RubySymbol symbol = runtime.newSymbol(entry.getKey());
-            if (!symbol.validInstanceVariableName()) continue;
+            if (!(value instanceof IRubyObject) || !symbol.validInstanceVariableName()) continue;
 
             IRubyObject obj = (IRubyObject) value;
 
@@ -2515,7 +2514,7 @@ public class RubyBasicObject implements Cloneable, IRubyObject, Serializable, Co
                 return newMethod;
             }
         }
-        throw getRuntime().newNameError(str(getRuntime(), "undefined method `", symbol,  "' for `", inspect(), "'"), symbol);
+        throw getRuntime().newNameError(str(getRuntime(), "undefined method `", symbol,  "' for `", inspect(), "'"), methodName);
     }
 
     /** rb_obj_method

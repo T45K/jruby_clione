@@ -76,12 +76,12 @@ public class PopenExecutor {
     // MRI: rb_f_spawn
     public static RubyFixnum spawn(ThreadContext context, IRubyObject[] argv) {
         Ruby runtime = context.runtime;
-        long pid;
+        long pid = 0;
         String[] errmsg = { null };
         ExecArg eargp;
         IRubyObject fail_str;
 
-        eargp = execargNew(context, argv, true, false);
+        eargp = execargNew(context, argv, true);
         execargFixup(context, runtime, eargp);
         fail_str = eargp.use_shell ? eargp.command_name : eargp.command_name;
 
@@ -97,48 +97,15 @@ public class PopenExecutor {
         return runtime.newFixnum(pid);
     }
 
-    // MRI: rb_f_system
-    public IRubyObject systemInternal(ThreadContext context, IRubyObject[] argv, String[] errmsg) {
-        Ruby runtime = context.runtime;
-
+    // MRI: rb_spawn_internal
+    public long spawnInternal(ThreadContext context, IRubyObject[] argv, String[] errmsg) {
         ExecArg eargp;
-        long pid;
+        long ret;
 
-        eargp = execargNew(context, argv, true, true);
-        execargFixup(context, runtime, eargp);
-        pid = spawnProcess(context, runtime, eargp, errmsg);
-
-//            #if defined(HAVE_FORK) || defined(HAVE_SPAWNV)
-        if (pid > 0) {
-            long ret;
-            ret = RubyProcess.waitpid(runtime, pid, 0);
-            if (ret == -1)
-                throw runtime.newErrnoFromInt(runtime.getPosix().errno(), "Another thread waited the process started by system().");
-        }
-//            #endif
-//            #ifdef SIGCHLD
-//            signal(SIGCHLD, chfunc);
-//            #endif
-
-        if (pid < 0) {
-            if (eargp.exception) {
-                int err = errno.intValue();
-                RubyString command = eargp.command_name;
-                throw runtime.newErrnoFromInt(err, command.toString());
-            } else {
-                return context.nil;
-            }
-        }
-
-        int status = (int)((RubyProcess.RubyStatus) context.getLastExitStatus()).getStatus();
-
-        if (status == 0) return runtime.getTrue();
-
-        if (eargp.exception) {
-            throw runtime.newRuntimeError(RubyProcess.RubyStatus.pst_message("Command failed with", pid, status));
-        }
-
-        return runtime.getFalse();
+        eargp = execargNew(context, argv, true);
+        execargFixup(context, context.runtime, eargp);
+        ret = spawnProcess(context, context.runtime, eargp, errmsg);
+        return ret;
     }
 
     // MRI: rb_spawn_process
@@ -287,7 +254,7 @@ public class PopenExecutor {
         ExecArg execArg = null;
 
         if (!isPopenFork(context.runtime, (RubyString)prog))
-            execArg = execargNew(context, argv, true, false);
+            execArg = execargNew(context, argv, true);
         return new PopenExecutor().pipeOpen(context, execArg, modestr, fmode, convconfig);
     }
 
@@ -330,14 +297,14 @@ public class PopenExecutor {
 //            #endif
             tmp = ((RubyArray)tmp).aryDup();
             //            RBASIC_CLEAR_CLASS(tmp);
-            eargp = execargNew(context, ((RubyArray)tmp).toJavaArray(), false, false);
+            eargp = execargNew(context, ((RubyArray)tmp).toJavaArray(), false);
             ((RubyArray)tmp).clear();
         } else {
             pname = pname.convertToString();
             eargp = null;
             if (!isPopenFork(runtime, (RubyString)pname)) {
                 IRubyObject[] pname_p = {pname};
-                eargp = execargNew(context, pname_p, true, false);
+                eargp = execargNew(context, pname_p, true);
                 pname = pname_p[0];
             }
         }
@@ -552,7 +519,7 @@ public class PopenExecutor {
     private RubyIO pipeOpen(ThreadContext context, ExecArg eargp, String modestr, int fmode, IOEncodable convconfig) {
         final Ruby runtime = context.runtime;
         IRubyObject prog = eargp != null ? (eargp.use_shell ? eargp.command_name : eargp.command_name) : null;
-        long pid;
+        long pid = 0;
         OpenFile fptr;
         RubyIO port;
         OpenFile write_fptr;
@@ -1231,7 +1198,7 @@ public class PopenExecutor {
                                 context.pollThreadEvents();
                                 continue;
                             }
-                            throw runtime.newErrnoFromInt(open_data.errno.intValue(), vpath.toString());
+                            runtime.newErrnoFromInt(open_data.errno.intValue(), vpath.toString());
                         }
                         // We're in the fully-native process logic, so this should be a native stream
                         fd2 = ((ChannelFD) ret).realFileno;
@@ -1578,13 +1545,6 @@ public class PopenExecutor {
 //                            "gid option is unimplemented on this machine");
 //                    #endif
                 }
-                else if (id.equals("exception")) {
-                    if (eargp.exception_given) {
-                        throw runtime.newArgumentError("exception option specified twice");
-                    }
-                    eargp.exception_given = true;
-                    eargp.exception = val.isTrue();
-                }
                 else {
                     return ST_STOP;
                 }
@@ -1778,12 +1738,9 @@ public class PopenExecutor {
     private static final int ST_STOP = 1;
 
     // rb_execarg_new
-    public static ExecArg execargNew(ThreadContext context, IRubyObject[] argv, boolean accept_shell, boolean allow_exc_opt) {
+    public static ExecArg execargNew(ThreadContext context, IRubyObject[] argv, boolean accept_shell) {
         ExecArg eargp = new ExecArg();
         execargInit(context, argv, accept_shell, eargp);
-        if (!allow_exc_opt && eargp.exception_given) {
-            throw context.runtime.newArgumentError("exception option is not allowed");
-        }
         return eargp;
     }
 
@@ -2102,11 +2059,9 @@ public class PopenExecutor {
         int close_others_maxhint;
         RubyArray env_modification; /* null or [[k1,v1], ...] */
         String chdir_dir;
-        final List<SpawnFileAction> fileActions = new ArrayList();
-        final List<SpawnAttribute> attributes = new ArrayList();
+        List<SpawnFileAction> fileActions = new ArrayList();
+        List<SpawnAttribute> attributes = new ArrayList();
         IRubyObject path_env;
-        boolean exception_given;
-        boolean exception;
 
         boolean pgroup_given() {
             return (flags & 0x1) != 0;

@@ -266,7 +266,7 @@ public abstract class CachingCallSite extends CallSite {
         return cacheAndGet(self, selfType, methodName);
     }
 
-    // For use directly by classes (e.g. RubyClass) where the metaclass is the caller.
+    @Deprecated
     public final CacheEntry retrieveCache(RubyClass selfType) {
         // This must be retrieved *once* to avoid racing with other threads.
         CacheEntry cache = this.cache;
@@ -296,9 +296,13 @@ public abstract class CachingCallSite extends CallSite {
         return cacheAndGet(self, selfType, methodName).method.isBuiltin(); // false for method.isUndefined()
     }
 
-    // For use directly by classes (e.g. RubyClass) where the metaclass is the caller.
+    @Deprecated
     public final boolean isBuiltin(RubyClass selfType) {
-        return retrieveCache(selfType).method.isBuiltin();
+        CacheEntry cache = this.cache;
+        if (cache.typeOk(selfType)) {
+            return cache.method.isBuiltin();
+        }
+        return cacheAndGet(selfType, methodName).method.isBuiltin();
     }
 
     @Deprecated

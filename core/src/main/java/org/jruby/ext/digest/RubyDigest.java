@@ -88,7 +88,7 @@ public class RubyDigest {
 
     public static void createDigest(Ruby runtime) {
         try {
-            provider = (Provider) Class.forName(PROVIDER).getConstructor().newInstance();
+            provider = (Provider) Class.forName(PROVIDER).newInstance();
         }
         catch (Throwable t) { /* provider is not available */ }
 

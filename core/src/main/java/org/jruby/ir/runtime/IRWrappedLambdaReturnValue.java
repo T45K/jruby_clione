@@ -15,7 +15,7 @@ import org.jruby.runtime.builtin.IRubyObject;
 // are updated properly and ruby-level ensure code is run.
 public class IRWrappedLambdaReturnValue extends IRJump implements Unrescuable {
     public final IRubyObject returnValue;
-    final boolean isBreak;
+    boolean isBreak;
 
     public IRWrappedLambdaReturnValue(IRubyObject v, boolean isBreak) {
         this.returnValue = v;

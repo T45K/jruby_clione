@@ -32,9 +32,9 @@
 package org.jruby.javasupport.test;
  
 import org.jruby.Ruby;
-import org.jruby.test.Base;
+import org.jruby.test.TestRubyBase;
  
-public class TestNativeException extends Base {
+public class TestNativeException extends TestRubyBase {
 
     public TestNativeException(String name) {
         super(name);

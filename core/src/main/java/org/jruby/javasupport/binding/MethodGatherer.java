@@ -161,14 +161,13 @@ public class MethodGatherer {
     }
 
     public static void eachAccessibleMethod(final Class<?> javaClass, Predicate<Method[]> classProcessor, Predicate<Method[]> interfaceProcessor) {
-        boolean isPublic = Modifier.isPublic(javaClass.getModifiers());
+        HashMap<String, List<Method>> nameMethods = new HashMap<>(32);
 
         // we scan all superclasses, but avoid adding superclass methods with
         // same name+signature as subclass methods (see JRUBY-3130)
         for ( Class<?> klass = javaClass; klass != null; klass = klass.getSuperclass() ) {
-            // only add if target class is public or source class is public, and package is exported
-            if (Modules.isExported(klass, Java.class) &&
-                    (isPublic || Modifier.isPublic(klass.getModifiers()))) {
+            // only add class's methods if it's public (JIRA issue JRUBY-4799)
+            if (Modifier.isPublic(klass.getModifiers()) && Modules.isExported(klass, Java.class)) {
                 // for each class, scan declared methods for new signatures
                 try {
                     // add methods, including static if this is the actual class,
@@ -203,7 +202,7 @@ public class MethodGatherer {
         int childModifiers, parentModifiers;
 
         return parent.getDeclaringClass().isAssignableFrom(child.getDeclaringClass())
-                && parent.getReturnType().isAssignableFrom(child.getReturnType())
+                && child.getReturnType() == parent.getReturnType()
                 && child.isVarArgs() == parent.isVarArgs()
                 && Modifier.isPublic(childModifiers = child.getModifiers()) == Modifier.isPublic(parentModifiers = parent.getModifiers())
                 && Modifier.isProtected(childModifiers) == Modifier.isProtected(parentModifiers)
@@ -234,10 +233,7 @@ public class MethodGatherer {
                             // and virtual dispatch will call the subclass impl anyway.
                             // Used for instance methods, for which we usually want to use the highest-up
                             // callable implementation.
-                            // GH-6199: Only replace child method if parent class is public.
-                            if (Modifier.isPublic(method.getDeclaringClass().getModifiers())) {
-                                childMethods.set(i, method);
-                            }
+                            childMethods.set(i, method);
                         } else {
                             // just skip the new method, since we don't need it (already found one)
                             // used for interface methods, which we want to add unconditionally
@@ -552,14 +548,15 @@ public class MethodGatherer {
             if (constant) {
                 addConstantField(field);
 
-                // If we are adding it as a constant,  do not add an accessor (jruby/jruby#5730)
-                continue;
+                // If we already are adding it as a constant, make the accessors warn about deprecated behavior.
+                // See jruby/jruby#5730.
+                if (!isInterface) continue;
             }
 
             if (isStatic) {
-                addField(getStaticInstallersForWrite(), staticNames, field, isFinal, true);
+                addField(getStaticInstallersForWrite(), staticNames, field, isFinal, true, constant);
             } else {
-                addField(getInstanceInstallersForWrite(), instanceNames, field, isFinal, false);
+                addField(getInstanceInstallersForWrite(), instanceNames, field, isFinal, false, false);
             }
         }
     }
@@ -639,14 +636,15 @@ public class MethodGatherer {
             final Map<String, AssignedName> names,
             final Field field,
             final boolean isFinal,
-            final boolean isStatic) {
+            final boolean isStatic,
+            final boolean isConstant) {
 
         final String name = field.getName();
 
         if ( Priority.FIELD.lessImportantThan( names.get(name) ) ) return;
 
         names.put(name, new AssignedName(name, Priority.FIELD));
-        callbacks.put(name, isStatic ? new StaticFieldGetterInstaller(name, field) :
+        callbacks.put(name, isStatic ? new StaticFieldGetterInstaller(name, field, isConstant) :
                 new InstanceFieldGetterInstaller(name, field));
 
         if (!isFinal) {

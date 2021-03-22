@@ -6,13 +6,11 @@ import org.jruby.RubyInstanceConfig;
 import org.jruby.RubyModule;
 import org.jruby.RubySymbol;
 import org.jruby.compiler.Compilable;
-import org.jruby.ext.coverage.CoverageData;
 import org.jruby.ir.instructions.*;
 import org.jruby.ir.interpreter.FullInterpreterContext;
 import org.jruby.ir.interpreter.InterpreterContext;
 import org.jruby.ir.operands.*;
 import org.jruby.ir.passes.*;
-import org.jruby.ir.persistence.IRWriter;
 import org.jruby.ir.persistence.IRWriterEncoder;
 import org.jruby.ir.representations.BasicBlock;
 import org.jruby.ir.transformations.inlining.CFGInliner;
@@ -98,7 +96,7 @@ public abstract class IRScope implements ParseResult {
 
     // List of all scopes this scope contains lexically.  This is not used
     // for execution, but is used during dry-runs for debugging.
-    private final List<IRScope> lexicalChildren = Collections.synchronizedList(new ArrayList<>());
+    private List<IRScope> lexicalChildren;
 
     /** Startup interpretation depends on this */
     protected InterpreterContext interpreterContext;
@@ -118,7 +116,6 @@ public abstract class IRScope implements ParseResult {
     private String inlineFailed;
     public Compilable compilable;
 
-    private int coverageMode;
     // At least until we change the design all of these state fields are true from IRBuild forward.  With IR
     // optimization passes it is incredibly unlikely any of these could ever be unset anyways; So this is not
     // a poor list of 'truisms' for this Scope.
@@ -144,22 +141,13 @@ public abstract class IRScope implements ParseResult {
         this.staticScope = s.staticScope;
         this.nextClosureIndex = s.nextClosureIndex;
         this.interpreterContext = null;
-        this.coverageMode = CoverageData.NONE;
         this.localVars = new HashMap<>(s.localVars);
         this.scopeId = globalScopeCount.getAndIncrement();
 
         setupLexicalContainment();
-
-        if (staticScope != null && !(this instanceof IRScriptBody) && !(this instanceof IREvalScript)) {
-            staticScope.setFile(getFile());
-        }
     }
 
     public IRScope(IRManager manager, IRScope lexicalParent, ByteList name, int lineNumber, StaticScope staticScope) {
-        this(manager, lexicalParent, name, lineNumber, staticScope, CoverageData.NONE);
-    }
-
-    public IRScope(IRManager manager, IRScope lexicalParent, ByteList name, int lineNumber, StaticScope staticScope, int coverageMode) {
         this.manager = manager;
         this.lexicalParent = lexicalParent;
         this.name = name;
@@ -167,8 +155,6 @@ public abstract class IRScope implements ParseResult {
         this.staticScope = staticScope;
         this.nextClosureIndex = 0;
         this.interpreterContext = null;
-
-        this.coverageMode = coverageMode;
 
         // We only can compute this once since 'module X; using A; class B; end; end' vs
         // 'module X; class B; using A; end; end'.  First case B can see refinements and in second it cannot.
@@ -181,7 +167,10 @@ public abstract class IRScope implements ParseResult {
     }
 
     private void setupLexicalContainment() {
-        if (lexicalParent != null) lexicalParent.addChildScope(this);
+        if (manager.isDryRun() || RubyInstanceConfig.IR_WRITING || RubyInstanceConfig.RECORD_LEXICAL_HIERARCHY) {
+            lexicalChildren = new ArrayList<>(1);
+            if (lexicalParent != null) lexicalParent.addChildScope(this);
+        }
     }
 
     public int getScopeId() {
@@ -198,11 +187,13 @@ public abstract class IRScope implements ParseResult {
         return (other != null) && (getClass() == other.getClass()) && (scopeId == ((IRScope) other).scopeId);
     }
 
-    protected synchronized void addChildScope(IRScope scope) {
+    protected void addChildScope(IRScope scope) {
+        if (lexicalChildren == null) lexicalChildren = new ArrayList<>(1);
         lexicalChildren.add(scope);
     }
 
-    public synchronized List<IRScope> getLexicalScopes() {
+    public List<IRScope> getLexicalScopes() {
+        if (lexicalChildren == null) lexicalChildren = new ArrayList<>(1);
         return lexicalChildren;
     }
 
@@ -426,14 +417,6 @@ public abstract class IRScope implements ParseResult {
         return hasLoops;
     }
 
-    public void setCoverageMode(int coverageMode) {
-        this.coverageMode = coverageMode;
-    }
-
-    public int getCoverageMode() {
-        return coverageMode;
-    }
-
     public void setHasNonLocalReturns() {
         hasNonLocalReturns = true;
     }
@@ -471,21 +454,6 @@ public abstract class IRScope implements ParseResult {
     }
     
     public boolean usesEval() {
-        return usesEval;
-    }
-
-    public boolean anyUsesEval() {
-        // Currently methods are only lazy scopes so we need to build them if we decide to persist them.
-        if (this instanceof IRMethod) {
-            ((IRMethod) this).lazilyAcquireInterpreterContext();
-        }
-
-        boolean usesEval = usesEval();
-
-        for (IRScope child : getLexicalScopes()) {
-            usesEval |= child.anyUsesEval();
-        }
-
         return usesEval;
     }
 
@@ -746,10 +714,6 @@ public abstract class IRScope implements ParseResult {
         return optimizedInterpreterContext;
     }
 
-    public InterpreterContext builtInterpreterContext() {
-        return getInterpreterContext();
-    }
-
     protected void depends(Object obj) {
         assert obj != null: "Unsatisfied dependency and this depends() was set " +
                 "up wrong.  Use depends(build()) not depends(build).";
@@ -899,7 +863,19 @@ public abstract class IRScope implements ParseResult {
      */
     public void captureParentRefinements(ThreadContext context) {
         if (maybeUsingRefinements()) {
-            getStaticScope().captureParentRefinements(context);
+            for (IRScope cur = this.getLexicalParent(); cur != null; cur = cur.getLexicalParent()) {
+                RubyModule overlay = cur.staticScope.getOverlayModuleForRead();
+                if (overlay != null && !overlay.getRefinements().isEmpty()) {
+                    // capture current refinements at definition time
+                    RubyModule myOverlay = staticScope.getOverlayModuleForWrite(context);
+
+                    // FIXME: MRI does a copy-on-write thing here with the overlay
+                    myOverlay.getRefinementsForWrite().putAll(overlay.getRefinements());
+
+                    // only search until we find an overlay
+                    break;
+                }
+            }
         }
     }
 
@@ -919,9 +895,9 @@ public abstract class IRScope implements ParseResult {
     }
 
     public void persistScopeHeader(IRWriterEncoder file) {
-        if (IRWriter.shouldLog(file)) System.out.println("IRScope.persistScopeHeader: type       = " + getScopeType());
+        if (RubyInstanceConfig.IR_WRITING_DEBUG) System.out.println("IRScopeType = " + getScopeType());
         file.encode(getScopeType()); // type is enum of kind of scope
-        if (IRWriter.shouldLog(file)) System.out.println("IRScope.persistScopeHeader: line       = " + getLine());
+        if (RubyInstanceConfig.IR_WRITING_DEBUG) System.out.println("Line # = " + getLine());
         file.encode(getLine());
         if (RubyInstanceConfig.IR_WRITING_DEBUG) System.out.println("# of temp vars = " + getInterpreterContext().getTemporaryVariableCount());
         file.encode(getInterpreterContext().getTemporaryVariableCount());
@@ -941,8 +917,8 @@ public abstract class IRScope implements ParseResult {
         file.encode(canReceiveBreaks());
         file.encode(canReceiveNonlocalReturns());
         file.encode(usesZSuper());
+        file.encode(needsCodeCoverage());
         file.encode(usesEval());
-        file.encode(getCoverageMode());
     }
 
     public static EnumSet<IRFlags> allocateInitialFlags(IRScope scope) {

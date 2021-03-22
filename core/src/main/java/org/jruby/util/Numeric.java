@@ -39,11 +39,9 @@ import org.jruby.RubyFixnum;
 import org.jruby.RubyFloat;
 import org.jruby.RubyInteger;
 import org.jruby.RubyNumeric;
-import org.jruby.RubyRational;
 import org.jruby.runtime.JavaSites;
 import org.jruby.runtime.ThreadContext;
 import org.jruby.runtime.builtin.IRubyObject;
-import org.jruby.runtime.callsite.CachingCallSite;
 
 import java.math.BigInteger;
 
@@ -54,33 +52,9 @@ public class Numeric {
      *
      */
     public static IRubyObject f_add(ThreadContext context, IRubyObject x, IRubyObject y) {
-        CachingCallSite op_plus = sites(context).op_plus;
-
-        if (op_plus.isBuiltin(x)) {
-            if (x instanceof RubyInteger) {
-                if (fixnumZero(x)) return y;
-                if (fixnumZero(y)) return x;
-                return ((RubyInteger) x).op_plus(context, y);
-            } else if (x instanceof RubyFloat) {
-                if (fixnumZero(y)) return x;
-                return ((RubyFloat) x).op_plus(context, y);
-            } else if (x instanceof RubyRational) {
-                if (fixnumZero(y)) return x;
-                return ((RubyRational) x).op_plus(context, y);
-            }
-        }
-
-        return op_plus.call(context, x, x, y);
-    }
-
-    private static boolean fixnumZero(IRubyObject y) {
-        return y instanceof RubyFixnum
-                && ((RubyFixnum) y).getLongValue() == 0;
-    }
-
-    private static boolean fixnumOne(IRubyObject y) {
-        return y instanceof RubyFixnum
-                && ((RubyFixnum) y).getLongValue() == 1;
+        if (y instanceof RubyFixnum && ((RubyFixnum)y).getLongValue() == 0) return x;
+        if (x instanceof RubyFixnum && ((RubyFixnum)x).getLongValue() == 0) return y;
+        return sites(context).op_plus.call(context, x, x, y);
     }
 
     public static RubyInteger f_add(ThreadContext context, RubyInteger x, RubyInteger y) {
@@ -172,31 +146,23 @@ public class Numeric {
      *
      */
     public static IRubyObject f_mul(ThreadContext context, IRubyObject x, IRubyObject y) {
-        CachingCallSite op_times = sites(context).op_times;
-
-        if (op_times.isBuiltin(x)) {
+        Ruby runtime = context.runtime;
+        if (y instanceof RubyFixnum) {
+            long iy = ((RubyFixnum) y).getLongValue();
+            if (iy == 1) return x;
             if (x instanceof RubyInteger) {
-                if (fixnumZero(y)) {
-                    return y;
-                }
-                if (fixnumZero(x) && y instanceof RubyInteger) {
-                    return x;
-                }
-                if (fixnumOne(x)) return y;
-                if (fixnumOne(y)) return x;
-                return ((RubyInteger) x).op_mul(context, y);
-            } else if (x instanceof RubyFloat) {
-                if (fixnumOne(y)) return x;
-                return ((RubyFloat) x).op_mul(context, y);
-            } else if (x instanceof RubyRational) {
-                if (fixnumOne(y)) return x;
-                return ((RubyRational) x).op_mul(context, y);
-            } else {
-                if (fixnumOne(y)) return x;
+                if (iy == 0) return RubyFixnum.zero(runtime);
+                return f_mul(context, (RubyInteger) x, (RubyFixnum) y);
+            }
+        } else if (x instanceof RubyFixnum) {
+            long ix = ((RubyFixnum) x).getLongValue();
+            if (ix == 1) return y;
+            if (y instanceof RubyInteger) {
+                if (ix == 0) return RubyFixnum.zero(runtime);
+                return f_mul(context, (RubyFixnum) x, (RubyInteger) y);
             }
         }
-
-        return op_times.call(context, x, x, y);
+        return sites(context).op_times.call(context, x, x, y);
     }
 
     public static RubyInteger f_mul(ThreadContext context, RubyInteger x, RubyInteger y) {
@@ -220,13 +186,8 @@ public class Numeric {
      *
      */
     public static IRubyObject f_sub(ThreadContext context, IRubyObject x, IRubyObject y) {
-        CachingCallSite op_minus = sites(context).op_minus;
-
-        if (op_minus.isBuiltin(x) && fixnumZero(y)) {
-            return x;
-        }
-
-        return op_minus.call(context, x, x, y);
+        if (y instanceof RubyFixnum && ((RubyFixnum)y).getLongValue() == 0) return x;
+        return sites(context).op_minus.call(context, x, x, y);
     }
 
     public static RubyInteger f_sub(ThreadContext context, RubyInteger x, RubyInteger y) {
@@ -473,13 +434,6 @@ public class Numeric {
         return x.quo(context, y);
     }
 
-    /**
-     * MRI: f_reciprocal
-     */
-    public static IRubyObject f_reciprocal(ThreadContext context, IRubyObject x) {
-        return f_quo(context, RubyFixnum.one(context.runtime), x);
-    }
-
     /** f_rshift
      *
      */
@@ -705,7 +659,6 @@ public class Numeric {
         return n < SQRT_LONG_MAX && n >= -SQRT_LONG_MAX;
     }
 
-    // MRI: rb_int_pow
     public static RubyNumeric int_pow(ThreadContext context, long x, long y) {
         boolean neg = x < 0;
         long z = 1;
@@ -739,16 +692,6 @@ public class Numeric {
         } while(--y != 0);
         if (neg) z = -z;
         return RubyFixnum.newFixnum(runtime, z);
-    }
-
-    // MRI: rb_num_pow
-    public static IRubyObject num_pow(ThreadContext context, IRubyObject x, IRubyObject y) {
-        if (x instanceof RubyInteger) return ((RubyInteger) x).pow(context, y);
-        if (x instanceof RubyFloat) return ((RubyFloat) x).op_pow(context, y);
-//        if (SPECIAL_CONST_P(x)) return Qnil;
-        if (x instanceof RubyComplex) return ((RubyComplex) x).op_expt(context, y);
-        if (x instanceof RubyRational) return ((RubyRational) x).op_expt(context, y);
-        return context.nil;
     }
 
     public static boolean multiplyOverflows(long a, long b) {

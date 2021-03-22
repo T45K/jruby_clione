@@ -4,7 +4,7 @@ import org.jruby.Ruby;
 import org.jruby.ext.nkf.RubyNKF;
 import org.jruby.ext.nkf.Command;
 
-public class TestRubyNKF extends Base {
+public class TestRubyNKF extends TestRubyBase {
     public TestRubyNKF(final String name) {
         super(name);
     }

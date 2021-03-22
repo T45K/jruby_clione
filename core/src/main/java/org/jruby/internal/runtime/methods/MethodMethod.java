@@ -42,7 +42,7 @@ import org.jruby.runtime.builtin.IRubyObject;
  * @author jpetersen
  */
 public class MethodMethod extends DynamicMethod {
-    private final RubyUnboundMethod method;
+    private RubyUnboundMethod method;
 
     /**
      * Constructor for MethodMethod.

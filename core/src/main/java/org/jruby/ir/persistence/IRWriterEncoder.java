@@ -24,8 +24,6 @@ import java.util.EnumSet;
  */
 public interface IRWriterEncoder {
 
-    public boolean isAnalyzer();
-
     public void encode(ByteList bytelist);
     public void encode(Encoding encoding);
     public void encode(RubySymbol value);

@@ -39,7 +39,6 @@ import org.jruby.internal.runtime.methods.CompiledIRMethod;
 import org.jruby.internal.runtime.methods.MixedModeIRMethod;
 import org.jruby.ir.targets.JVMVisitor;
 import org.jruby.ir.targets.JVMVisitorMethodContext;
-import org.jruby.runtime.ArgumentDescriptor;
 import org.jruby.util.collections.IntHashMap;
 
 class MethodJITTask extends JITCompiler.Task {
@@ -69,7 +68,7 @@ class MethodJITTask extends JITCompiler.Task {
 
         String key = SexpMaker.sha1(method.getIRScope());
         Ruby runtime = jitCompiler.runtime;
-        JVMVisitor visitor = JVMVisitor.newForJIT(runtime);
+        JVMVisitor visitor = new JVMVisitor(runtime);
         MethodJITClassGenerator generator = new MethodJITClassGenerator(className, methodName, key, runtime, method, visitor);
 
         JVMVisitorMethodContext context = new JVMVisitorMethodContext();
@@ -87,12 +86,9 @@ class MethodJITTask extends JITCompiler.Task {
             method.completeBuild(
                     new CompiledIRMethod(
                             variable,
-                            null,
-                            -1,
                             method.getIRScope(),
                             method.getVisibility(),
-                            method.getImplementationClass(),
-                            ArgumentDescriptor.encode(method.getArgumentDescriptors())));
+                            method.getImplementationClass()));
 
         } else {
             // also specific-arity
@@ -104,8 +100,7 @@ class MethodJITTask extends JITCompiler.Task {
                                 entry.getKey(),
                                 method.getIRScope(),
                                 method.getVisibility(),
-                                method.getImplementationClass(),
-                                ArgumentDescriptor.encode(method.getArgumentDescriptors())));
+                                method.getImplementationClass()));
                 break; // FIXME: only supports one arity
             }
         }

@@ -8,9 +8,9 @@ import java.io.InputStream;
  * the stream supports mark().
  */
 public class InputStreamMarkCursor {
-    private final InputStream in;
+    private InputStream in;
     private int i = 0;
-    private final int markSize;
+    private int markSize;
     private int actualReadTotal;
     private byte[] buf;
     private int endPoint = 0;

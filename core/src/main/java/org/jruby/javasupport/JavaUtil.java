@@ -870,7 +870,7 @@ public class JavaUtil {
     };
 
     public static class StringConverter extends JavaConverter {
-        private final Encoding encoding;
+        private Encoding encoding;
 
         public StringConverter() {
             this(null);

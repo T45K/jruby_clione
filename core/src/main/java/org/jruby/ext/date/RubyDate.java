@@ -798,11 +798,9 @@ public class RubyDate extends RubyObject {
 
     private IRubyObject fallback_eqq(ThreadContext context, IRubyObject other) {
         RubyArray res;
-        final IRubyObject $ex = context.getErrorInfo();
         try {
             res = (RubyArray) other.callMethod(context, "coerce", this);
         } catch (RaiseException ex) {
-            context.setErrorInfo($ex);
             if (ex.getException() instanceof RubyNoMethodError) return context.nil;
             throw ex;
         }
@@ -856,11 +854,9 @@ public class RubyDate extends RubyObject {
 
     private IRubyObject fallback_cmp(ThreadContext context, IRubyObject other) {
         RubyArray res;
-        final IRubyObject $ex = context.getErrorInfo();
         try {
             res = (RubyArray) other.callMethod(context, "coerce", this);
         } catch (RaiseException ex) {
-            context.setErrorInfo($ex);
             if (ex.getException() instanceof RubyNoMethodError) return context.nil;
             throw ex;
         }

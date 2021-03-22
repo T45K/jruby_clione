@@ -11,7 +11,7 @@ public class MultiClassLoader
     extends ClassLoader
 {
 
-    private final List<ClassLoader> classLoaders = new LinkedList<>();
+    private List<ClassLoader> classLoaders = new LinkedList<>();
 
     public MultiClassLoader(ClassLoader parent) {
         super(parent);

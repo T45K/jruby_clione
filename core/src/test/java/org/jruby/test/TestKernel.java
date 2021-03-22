@@ -33,6 +33,8 @@
 
 package org.jruby.test;
 
+import java.util.ArrayList;
+
 import org.jruby.Ruby;
 import org.jruby.RubyException;
 import org.jruby.RubyFixnum;
@@ -43,7 +45,7 @@ import org.jruby.runtime.builtin.IRubyObject;
 /**
  * Unit test for the kernel class.
  **/
-public class TestKernel extends Base {
+public class TestKernel extends TestRubyBase {
 
     public TestKernel(String name) {
         super(name);

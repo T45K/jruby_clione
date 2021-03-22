@@ -13,7 +13,7 @@ import org.jruby.lexer.yacc.ISourcePosition;
  * @author enebo
  */
 public class KeywordArgNode extends Node {
-    private final AssignableNode assignable;
+    private AssignableNode assignable;
 
     public KeywordArgNode(ISourcePosition position, AssignableNode assignable) {
         super(position, true);

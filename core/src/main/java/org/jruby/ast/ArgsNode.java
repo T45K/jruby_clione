@@ -53,10 +53,10 @@ import org.jruby.runtime.Helpers;
  * b       = block arg
  */
 public class ArgsNode extends Node {
-    private final Node[] args;
-    private final short optIndex;
-    private final short postIndex;
-    private final short keywordsIndex;
+    private Node[] args;
+    private short optIndex;
+    private short postIndex;
+    private short keywordsIndex;
 
     protected final RestArgNode restArgNode;
     private final KeywordRestArgNode keyRest;

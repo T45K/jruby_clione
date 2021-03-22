@@ -160,7 +160,7 @@ public class ClassExtensionLibrary implements Library {
     public void load(Ruby runtime, boolean wrap) {
         if(BasicLibraryService.class.isAssignableFrom(theClass)) {
             try {
-                runtime.loadExtension(name, (BasicLibraryService)theClass.getConstructor().newInstance(), wrap);
+                runtime.loadExtension(name, (BasicLibraryService)theClass.newInstance(), wrap);
             } catch(final Exception ee) {
                 throw new RuntimeException(ee.getMessage(),ee);
             }

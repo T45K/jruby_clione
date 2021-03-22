@@ -43,7 +43,7 @@ import org.jruby.lexer.yacc.ISourcePosition;
  *	access to a global variable.
  */
 public class GlobalVarNode extends Node implements INameNode, SideEffectFree {
-    private final RubySymbol name;
+    private RubySymbol name;
 
     public GlobalVarNode(ISourcePosition position, RubySymbol name) {
         super(position, false);

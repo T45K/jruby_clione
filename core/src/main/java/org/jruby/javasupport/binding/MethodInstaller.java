@@ -5,7 +5,6 @@ import org.jruby.internal.runtime.methods.DynamicMethod;
 import org.jruby.javasupport.JavaUtil;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -27,14 +26,9 @@ public abstract class MethodInstaller extends NamedInstaller {
     // called only by initializing thread; no synchronization required
     final void addMethod(final Method method, final Class<?> clazz) {
         this.methods.add(method);
-        Class<?> declaringClass = method.getDeclaringClass();
-
-        // Only bind this method if it is local to the target class or if it is
-        // declared in an interface or non-public superclass.
         localMethod |=
-            clazz == declaringClass ||
-                    !Modifier.isPublic(declaringClass.getModifiers()) ||
-                    declaringClass.isInterface();
+            clazz == method.getDeclaringClass() ||
+            method.getDeclaringClass().isInterface();
     }
 
     // called only by initializing thread; no synchronization required

@@ -41,12 +41,11 @@ import org.jruby.lexer.yacc.ISourcePosition;
  */
 public class AttrAssignNode extends Node implements INameNode, IArgumentNode {
     protected final Node receiverNode;
-    private final RubySymbol name;
+    private RubySymbol name;
     private Node argsNode;
-    private final Node blockNode;
     private final boolean isLazy;
 
-    public AttrAssignNode(ISourcePosition position, Node receiverNode, RubySymbol name, Node argsNode, Node blockNode, boolean isLazy) {
+    public AttrAssignNode(ISourcePosition position, Node receiverNode, RubySymbol name, Node argsNode, boolean isLazy) {
         super(position, receiverNode != null && receiverNode.containsVariableAssignment() || argsNode != null && argsNode.containsVariableAssignment());
 
         assert receiverNode != null : "receiverNode is not null";
@@ -58,7 +57,6 @@ public class AttrAssignNode extends Node implements INameNode, IArgumentNode {
         this.receiverNode = receiverNode;
         this.name = name;
         this.argsNode = argsNode;
-        this.blockNode = blockNode;
         this.isLazy = isLazy;
     }
 
@@ -99,10 +97,6 @@ public class AttrAssignNode extends Node implements INameNode, IArgumentNode {
      */
     public Node getArgsNode() {
         return argsNode;
-    }
-
-    public Node getBlockNode() {
-        return blockNode;
     }
 
     /**

@@ -33,8 +33,8 @@ import java.util.List;
 
 public class SignatureNode {
     protected List<Object> modifiers;
-    protected final String name;
-    protected final List<ParameterNode> parameterList;
+    protected String name;
+    protected List<ParameterNode> parameterList;
     protected String extraTypeInfo;
     protected List<TypeNode> throwTypes;
 

@@ -48,7 +48,7 @@ import org.jruby.runtime.builtin.IRubyObject;
  * @author jpetersen
  */
 public class ProcMethod extends DynamicMethod implements PositionAware, IRMethodArgs {
-    private final RubyProc proc;
+    private RubyProc proc;
 
     /**
      * Constructor for ProcMethod.

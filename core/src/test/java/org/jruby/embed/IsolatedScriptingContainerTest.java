@@ -39,7 +39,6 @@ public class IsolatedScriptingContainerTest {
         // we do have an instance of "jruby" loaded via some other classloader
     	//System.setProperty("jruby.debug.loadService", "true");
         ScriptingContainer instance = new IsolatedScriptingContainer();
-        instance.runScriptlet("require 'jruby.rb'");
         String result = instance.runScriptlet( "$LOAD_PATH" ).toString();
         assertNotNull(result);
 

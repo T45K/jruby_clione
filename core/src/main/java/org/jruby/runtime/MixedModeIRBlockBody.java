@@ -2,6 +2,7 @@ package org.jruby.runtime;
 
 import java.io.ByteArrayOutputStream;
 
+import org.jruby.EvalType;
 import org.jruby.Ruby;
 import org.jruby.RubyModule;
 import org.jruby.compiler.Compilable;
@@ -20,19 +21,17 @@ import org.jruby.util.log.LoggerFactory;
 public class MixedModeIRBlockBody extends IRBlockBody implements Compilable<CompiledIRBlockBody> {
     private static final Logger LOG = LoggerFactory.getLogger(MixedModeIRBlockBody.class);
 
-    protected final boolean pushScope;
-    protected final boolean reuseParentScope;
+    protected boolean pushScope;
+    protected boolean reuseParentScope;
     private boolean displayedCFG = false; // FIXME: Remove when we find nicer way of logging CFG
     private InterpreterContext interpreterContext;
     private int callCount = 0;
     private volatile CompiledIRBlockBody jittedBody;
-    private final IRClosure closure;
 
     public MixedModeIRBlockBody(IRClosure closure, Signature signature) {
         super(closure, signature);
         this.pushScope = true;
         this.reuseParentScope = false;
-        this.closure = closure;
 
         // JIT currently JITs blocks along with their method and no on-demand by themselves.
         // We only promote to full build here if we are -X-C.
@@ -174,11 +173,6 @@ public class MixedModeIRBlockBody extends IRBlockBody implements Compilable<Comp
 
     public RubyModule getImplementationClass() {
         return closure.getStaticScope().getModule();
-    }
-
-    @Override
-    public IRClosure getScope() {
-        return closure;
     }
 
 }

@@ -35,7 +35,7 @@ import org.jruby.runtime.load.ClassExtensionLibrary;
 import org.jruby.runtime.load.LoadService;
 
 
-public class TestLoadService extends Base {
+public class TestLoadService extends TestRubyBase {
 
     private LoadService loadService;
     public void setUp() {

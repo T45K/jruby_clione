@@ -7,5 +7,4 @@ package org.jruby.ast.java_signature;
  * @Anno
  */
 public interface AnnotationExpression {
-	public <T> T accept(AnnotationVisitor<T> visitor);
 }

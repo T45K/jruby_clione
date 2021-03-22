@@ -8,7 +8,6 @@ import org.jruby.ir.operands.UndefinedValue;
 import org.jruby.ir.operands.Variable;
 import org.jruby.ir.persistence.IRReaderDecoder;
 import org.jruby.ir.persistence.IRWriterEncoder;
-import org.jruby.ir.targets.simple.ConstantLookupSite;
 import org.jruby.ir.transformations.inlining.CloneInfo;
 import org.jruby.parser.StaticScope;
 import org.jruby.runtime.DynamicScope;
@@ -26,7 +25,7 @@ public class LexicalSearchConstInstr extends OneOperandResultBaseInstr implement
     private RubySymbol constantName;
 
     // Constant caching
-    private final ConstantLookupSite site;
+    private volatile transient ConstantCache cache;
 
     public LexicalSearchConstInstr(Variable result, Operand definingScope, RubySymbol constantName) {
         super(Operation.LEXICAL_SEARCH_CONST, result, definingScope);
@@ -34,7 +33,6 @@ public class LexicalSearchConstInstr extends OneOperandResultBaseInstr implement
         assert result != null: "LexicalSearchConstInstr result is null";
 
         this.constantName = constantName;
-        this.site = new ConstantLookupSite(constantName);
     }
 
     public Operand getDefiningScope() {
@@ -70,9 +68,29 @@ public class LexicalSearchConstInstr extends OneOperandResultBaseInstr implement
         return new LexicalSearchConstInstr(d.decodeVariable(), d.decodeOperand(), d.decodeSymbol());
     }
 
+    private Object cache(ThreadContext context, StaticScope currScope, DynamicScope currDynScope, IRubyObject self, Object[] temp) {
+        StaticScope staticScope = (StaticScope) getDefiningScope().retrieve(context, self, currScope, currDynScope, temp);
+        String id = getId();
+
+        IRubyObject constant = staticScope.getConstantDefined(id);
+
+        if (constant == null) {
+            constant = UndefinedValue.UNDEFINED;
+        } else {
+            // recache
+            Invalidator invalidator = context.runtime.getConstantInvalidator(id);
+            cache = new ConstantCache(constant, invalidator.getData(), invalidator);
+        }
+
+        return constant;
+    }
+
     @Override
     public Object interpret(ThreadContext context, StaticScope currScope, DynamicScope currDynScope, IRubyObject self, Object[] temp) {
-        return site.lexicalSearchConst(context, (StaticScope) getDefiningScope().retrieve(context, self, currScope, currDynScope, temp));
+        ConstantCache cache = this.cache; // Store to temp so it does null out on us mid-stream
+        if (!ConstantCache.isCached(cache)) return cache(context, currScope, currDynScope, self, temp);
+
+        return cache.value;
     }
 
     @Override

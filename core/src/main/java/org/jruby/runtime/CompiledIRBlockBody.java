@@ -1,6 +1,7 @@
 package org.jruby.runtime;
 
 import com.headius.invokebinder.Binder;
+import org.jruby.ir.IRScope;
 import org.jruby.ir.runtime.IRRuntimeHelpers;
 import org.jruby.parser.StaticScope;
 import org.jruby.runtime.builtin.IRubyObject;
@@ -15,25 +16,21 @@ public class CompiledIRBlockBody extends IRBlockBody {
     protected MethodHandle normalYieldHandle;
     protected MethodHandle normalYieldSpecificHandle;
     protected MethodHandle normalYieldUnwrapHandle;
-    private final String encodedArgumentDescriptors;
 
-    public CompiledIRBlockBody(MethodHandle handle, StaticScope scope, String file, int line, String encodedArgumentDescriptors, long encodedSignature) {
-        super(scope, file, line, Signature.decode(encodedSignature));
-
+    public CompiledIRBlockBody(MethodHandle handle, IRScope closure, long encodedSignature) {
+        super(closure, Signature.decode(encodedSignature));
         // evalType copied (shared) on MixedModeIRBlockBody#completeBuild
         this.handle = handle;
-        MethodHandle callHandle = MethodHandles.insertArguments(handle, 2, scope, null);
+        MethodHandle callHandle = MethodHandles.insertArguments(handle, 2, closure.getStaticScope(), null);
         // This is gross and should be done in IR rather than in the handles.
         this.callHandle = MethodHandles.foldArguments(callHandle, CHECK_ARITY);
         this.yieldDirectHandle = MethodHandles.insertArguments(
-                MethodHandles.insertArguments(handle, 2, scope),
+                MethodHandles.insertArguments(handle, 2, closure.getStaticScope()),
                 4,
                 Block.NULL_BLOCK);
 
         // Done in the interpreter (WrappedIRClosure) but we do it here
-        scope.determineModule();
-
-        this.encodedArgumentDescriptors = encodedArgumentDescriptors;
+        closure.getStaticScope().determineModule();
     }
 
     private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
@@ -56,7 +53,7 @@ public class CompiledIRBlockBody extends IRBlockBody {
 
     @Override
     public ArgumentDescriptor[] getArgumentDescriptors() {
-        return ArgumentDescriptor.decode(scope.getModule().getRuntime(), encodedArgumentDescriptors);
+        return closure.getArgumentDescriptors();
     }
 
     @Override

@@ -82,8 +82,6 @@ import static org.jruby.runtime.Helpers.extractExceptionOnlyArg;
 @JRubyClass(name="UDPSocket", parent="IPSocket")
 public class RubyUDPSocket extends RubyIPSocket {
 
-    public static final double RECV_BUFFER_COPY_SCALE = 1.5;
-
     static void createUDPSocket(Ruby runtime) {
         RubyClass rb_cUDPSocket = runtime.defineClass("UDPSocket", runtime.getClass("IPSocket"), UDPSOCKET_ALLOCATOR);
 
@@ -94,7 +92,7 @@ public class RubyUDPSocket extends RubyIPSocket {
         runtime.getObject().setConstant("UDPsocket", rb_cUDPSocket);
     }
 
-    private static final ObjectAllocator UDPSOCKET_ALLOCATOR = new ObjectAllocator() {
+    private static ObjectAllocator UDPSOCKET_ALLOCATOR = new ObjectAllocator() {
 
         public IRubyObject allocate(Ruby runtime, RubyClass klass) {
             return new RubyUDPSocket(runtime, klass);
@@ -165,7 +163,7 @@ public class RubyUDPSocket extends RubyIPSocket {
             }
             else if (host instanceof RubyFixnum) {
                 // passing in something like INADDR_ANY
-                int intAddr;
+                int intAddr = 0;
                 if (host instanceof RubyInteger) {
                     intAddr = RubyNumeric.fix2int(host);
                 } else if (host instanceof RubyString) {
@@ -604,9 +602,7 @@ public class RubyUDPSocket extends RubyIPSocket {
             }
         }
 
-        // return a string from the buffer, copying if the buffer size is > 1.5 * data size
-        ByteList bl = new ByteList(buf.array(), 0, buf.position(), buf.limit() > buf.position() * RECV_BUFFER_COPY_SCALE);
-        RubyString result = runtime.newString(bl);
+        RubyString result = runtime.newString(new ByteList(buf.array(), 0, buf.position(), false));
 
         if (tuple != null) {
             tuple.result = result;

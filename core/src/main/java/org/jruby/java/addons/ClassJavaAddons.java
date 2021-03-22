@@ -7,7 +7,6 @@ import org.jruby.anno.JRubyMethod;
 import org.jruby.java.proxies.JavaProxy;
 import org.jruby.javasupport.Java;
 import org.jruby.javasupport.JavaClass;
-import org.jruby.javasupport.proxy.JavaProxyClass;
 import org.jruby.runtime.ThreadContext;
 import org.jruby.runtime.builtin.IRubyObject;
 
@@ -66,13 +65,7 @@ public abstract class ClassJavaAddons {
 
         klass.reifyWithAncestors(dumpDir, useChildLoader);
 
-        Class<?> reifiedClass = klass.getReifiedClass();
-        if (reifiedClass == null) { // java proxies can't be reified, but they deserve field accessors too
-            reifiedClass = JavaProxyClass.getProxyClass(context.getRuntime(), klass).getJavaClass();
-        }
-        if (reifiedClass == null) {
-            throw context.runtime.newTypeError("requested class " + klass.getName() + " was not reifiable");
-        }
+        final Class<?> reifiedClass = klass.getReifiedClass();
         generateFieldAccessors(context, klass, reifiedClass);
         return asJavaClass(context.runtime, reifiedClass);
     }

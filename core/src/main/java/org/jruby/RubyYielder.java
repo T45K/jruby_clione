@@ -53,7 +53,7 @@ public class RubyYielder extends RubyObject {
         return yielderc;
     }
 
-    private static final ObjectAllocator YIELDER_ALLOCATOR = new ObjectAllocator() {
+    private static ObjectAllocator YIELDER_ALLOCATOR = new ObjectAllocator() {
         @Override
         public IRubyObject allocate(Ruby runtime, RubyClass klass) {
             return new RubyYielder(runtime, klass);
@@ -120,7 +120,7 @@ public class RubyYielder extends RubyObject {
 
     @JRubyMethod(name = "<<", rest = true)
     public IRubyObject op_lshift(ThreadContext context, IRubyObject[] args) {
-        this.yield(context, args);
+        yield(context, args);
         return this;
     }
 }

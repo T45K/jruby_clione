@@ -8,8 +8,6 @@ package org.jruby.ir.persistence;
 
 import org.jcodings.Encoding;
 import org.jcodings.EncodingDB;
-import org.jcodings.specific.USASCIIEncoding;
-import org.jcodings.specific.UTF8Encoding;
 import org.jruby.RubyInstanceConfig;
 import org.jruby.RubySymbol;
 import org.jruby.ir.IRFlags;
@@ -103,18 +101,8 @@ public class IRReaderStream implements IRReaderDecoder, IRPersistenceValues {
 
     @Override
     public Encoding decodeEncoding() {
-        int size = decodeInt();
-
-        if (size == USASCII) {
-            return USASCIIEncoding.INSTANCE;
-        } else if (size == UTF8) {
-            return UTF8Encoding.INSTANCE;
-        } else {
-            // FIXME: Since we are looking up on byte[] we can avoid alloc by keeping temp array around (this is very uncommon though)
-            byte[] encodingName = new byte[size];
-            buf.get(encodingName);
-            return EncodingDB.getEncodings().get(encodingName).getEncoding();
-        }
+        byte[] encodingName = decodeByteArray();
+        return EncodingDB.getEncodings().get(encodingName).getEncoding();
     }
 
     @Override
@@ -148,7 +136,7 @@ public class IRReaderStream implements IRReaderDecoder, IRPersistenceValues {
 
         Encoding encoding = decodeEncoding();
 
-        return manager.getRuntime().newSymbol(new ByteList(bytes, encoding, false));
+        return currentScope.getManager().getRuntime().newSymbol(new ByteList(bytes, encoding, false));
     }
 
     @Override
@@ -535,7 +523,7 @@ public class IRReaderStream implements IRReaderDecoder, IRPersistenceValues {
             case SELF: return Self.SELF;
             case SPLAT: return Splat.decode(this);
             case STANDARD_ERROR: return new StandardError();
-            case STRING_LITERAL: return MutableString.decode(this);
+            case STRING_LITERAL: return StringLiteral.decode(this);
             case SVALUE: return SValue.decode(this);
             case SYMBOL: return Symbol.decode(this);
             case SYMBOL_PROC: return SymbolProc.decode(this);

@@ -31,7 +31,6 @@ package org.jruby.ext.set;
 
 import org.jcodings.specific.USASCIIEncoding;
 import org.jruby.*;
-import org.jruby.RubyEnumerator.SizeFn;
 import org.jruby.anno.JRubyMethod;
 import org.jruby.common.IRubyWarnings;
 import org.jruby.javasupport.JavaUtil;
@@ -596,20 +595,15 @@ public class RubySet extends RubyObject implements Set {
     @JRubyMethod
     public IRubyObject each(final ThreadContext context, Block block) {
         if ( ! block.isGiven() ) {
-            return enumeratorizeWithSize(context, this, "each", RubySet::size);
+            return enumeratorizeWithSize(context, this, "each", enumSize());
         }
 
         for (IRubyObject elem : elementsOrdered()) block.yield(context, elem);
         return this;
     }
 
-    /**
-     * A size method suitable for lambda method reference implementation of {@link SizeFn#size(ThreadContext, IRubyObject, IRubyObject[])}
-     *
-     * @see SizeFn#size(ThreadContext, IRubyObject, IRubyObject[])
-     */
-    private static IRubyObject size(ThreadContext context, RubySet recv, IRubyObject[] args) {
-        return context.runtime.newFixnum(recv.size());
+    private RubyEnumerator.SizeFn enumSize() {
+        return (context, args) -> context.runtime.newFixnum( size() );
     }
 
     /**
@@ -628,7 +622,7 @@ public class RubySet extends RubyObject implements Set {
 
     protected void addImplSet(final ThreadContext context, final RubySet set) {
         // NOTE: MRI cheats - does not call Set#add thus we do not care ...
-        hash.merge_bang(context, new IRubyObject[]{set.hash}, Block.NULL_BLOCK);
+        hash.merge_bang(context, set.hash, Block.NULL_BLOCK);
     }
 
     /**
@@ -670,7 +664,7 @@ public class RubySet extends RubyObject implements Set {
     @JRubyMethod
     public IRubyObject delete_if(final ThreadContext context, Block block) {
         if ( ! block.isGiven() ) {
-            return enumeratorizeWithSize(context, this, "delete_if", RubySet::size);
+            return enumeratorizeWithSize(context, this, "delete_if", enumSize());
         }
 
         Iterator<IRubyObject> it = elementsOrdered().iterator();
@@ -684,7 +678,7 @@ public class RubySet extends RubyObject implements Set {
     @JRubyMethod
     public IRubyObject keep_if(final ThreadContext context, Block block) {
         if ( ! block.isGiven() ) {
-            return enumeratorizeWithSize(context, this, "keep_if", RubySet::size);
+            return enumeratorizeWithSize(context, this, "keep_if", enumSize());
         }
 
         Iterator<IRubyObject> it = elementsOrdered().iterator();
@@ -698,7 +692,7 @@ public class RubySet extends RubyObject implements Set {
     @JRubyMethod(name = "collect!", alias = "map!")
     public IRubyObject collect_bang(final ThreadContext context, Block block) {
         if ( ! block.isGiven() ) {
-            return enumeratorizeWithSize(context, this, "collect!", RubySet::size);
+            return enumeratorizeWithSize(context, this, "collect!", enumSize());
         }
 
         final RubyArray elems = to_a(context); clearImpl();
@@ -712,7 +706,7 @@ public class RubySet extends RubyObject implements Set {
     @JRubyMethod(name = "reject!")
     public IRubyObject reject_bang(final ThreadContext context, Block block) {
         if ( ! block.isGiven() ) {
-            return enumeratorizeWithSize(context, this, "reject!", RubySet::size);
+            return enumeratorizeWithSize(context, this, "reject!", enumSize());
         }
 
         final int size = size();
@@ -725,10 +719,10 @@ public class RubySet extends RubyObject implements Set {
     }
 
     // Equivalent to Set#keep_if, but returns nil if no changes were made.
-    @JRubyMethod(name = "select!", alias = "filter!")
+    @JRubyMethod(name = "select!")
     public IRubyObject select_bang(final ThreadContext context, Block block) {
         if ( ! block.isGiven() ) {
-            return enumeratorizeWithSize(context, this, "select!", RubySet::size);
+            return enumeratorizeWithSize(context, this, "select!", enumSize());
         }
 
         final int size = size();
@@ -921,7 +915,7 @@ public class RubySet extends RubyObject implements Set {
     @JRubyMethod(name = "classify")
     public IRubyObject classify(ThreadContext context, final Block block) {
         if ( ! block.isGiven() ) {
-            return enumeratorizeWithSize(context, this, "classify", RubySet::size);
+            return enumeratorizeWithSize(context, this, "classify", enumSize());
         }
 
         final Ruby runtime = context.runtime;
@@ -961,7 +955,7 @@ public class RubySet extends RubyObject implements Set {
     @JRubyMethod(name = "divide")
     public IRubyObject divide(ThreadContext context, final Block block) {
         if ( ! block.isGiven() ) {
-            return enumeratorizeWithSize(context, this, "divide", RubySet::size);
+            return enumeratorizeWithSize(context, this, "divide", enumSize());
         }
 
         if ( block.getSignature().arityValue() == 2 ) {

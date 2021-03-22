@@ -1,5 +1,4 @@
-/*
- **** BEGIN LICENSE BLOCK *****
+/***** BEGIN LICENSE BLOCK *****
  * Version: EPL 2.0/GPL 2.0/LGPL 2.1
  *
  * The contents of this file are subject to the Eclipse Public
@@ -76,6 +75,7 @@ import org.jruby.util.cli.Options;
 import org.jruby.util.io.EncodingUtils;
 import org.jruby.util.collections.WeakValuedMap;
 
+import static org.jruby.util.StringSupport.EMPTY_BYTELIST_ARRAY;
 import static org.jruby.util.StringSupport.EMPTY_STRING_ARRAY;
 
 import java.util.Iterator;
@@ -200,6 +200,7 @@ public class RubyRegexp extends RubyObject implements ReOptions, EncodingCapable
 
     public static RubyClass createRegexpClass(Ruby runtime) {
         RubyClass regexpClass = runtime.defineClass("Regexp", runtime.getObject(), REGEXP_ALLOCATOR);
+        runtime.setRegexp(regexpClass);
 
         regexpClass.setClassIndex(ClassIndex.REGEXP);
         regexpClass.setReifiedClass(RubyRegexp.class);
@@ -219,7 +220,7 @@ public class RubyRegexp extends RubyObject implements ReOptions, EncodingCapable
         return regexpClass;
     }
 
-    private static final ObjectAllocator REGEXP_ALLOCATOR = new ObjectAllocator() {
+    private static ObjectAllocator REGEXP_ALLOCATOR = new ObjectAllocator() {
         @Override
         public IRubyObject allocate(Ruby runtime, RubyClass klass) {
             return new RubyRegexp(runtime, klass);
@@ -818,12 +819,9 @@ public class RubyRegexp extends RubyObject implements ReOptions, EncodingCapable
     */
     @JRubyMethod(name = "last_match", meta = true, reads = BACKREF)
     public static IRubyObject last_match_s(ThreadContext context, IRubyObject recv, IRubyObject nth) {
-        IRubyObject backref = context.getBackRef();
-        if (backref instanceof RubyMatchData) {
-            RubyMatchData match = ((RubyMatchData) backref);
-            return nth_match(match.backrefNumber(context.runtime, nth), match);
-        }
-        return backref; // nil
+        IRubyObject match = context.getBackRef();
+        if (match.isNil()) return match;
+        return nth_match(((RubyMatchData)match).backrefNumber(context.runtime, nth), match);
     }
 
     /** rb_reg_s_union
@@ -851,10 +849,9 @@ public class RubyRegexp extends RubyObject implements ReOptions, EncodingCapable
             Encoding hasAsciiCompatFixed = null;
             Encoding hasAsciiIncompat = null;
 
-            byte [] verticalVarBytes = new byte[]{'|'};
             for (int i = 0; i < args.length; i++) {
                 IRubyObject e = args[i];
-                if (i > 0) source.catAscii(verticalVarBytes, 0, 1);
+                if (i > 0) source.cat((byte)'|');
                 IRubyObject v = TypeConverter.convertToTypeWithCheck(e, runtime.getRegexp(), "to_regexp");
                 final Encoding enc; final ByteList re;
                 if (v != context.nil) {
@@ -1140,7 +1137,8 @@ public class RubyRegexp extends RubyObject implements ReOptions, EncodingCapable
         final RubyString[] strp = { null };
         int pos = matchPos(context, str, strp, null, 0);
         if (pos < 0) return context.nil;
-        return RubyFixnum.newFixnum(context.runtime, strp[0].subLength(pos));
+        pos = ((RubyString) strp[0]).subLength(pos);
+        return RubyFixnum.newFixnum(context.runtime, pos);
     }
 
     @Deprecated
@@ -1186,14 +1184,14 @@ public class RubyRegexp extends RubyObject implements ReOptions, EncodingCapable
     }
 
     private IRubyObject matchCommon(ThreadContext context, IRubyObject str, int pos, boolean setBackref, Block block) {
-        IRubyObject[] holder = setBackref ? null : new IRubyObject[] { context.nil };
+        IRubyObject[] holder = setBackref ? null : new IRubyObject[1];
         if (matchPos(context, str, null, holder, pos) < 0) {
             return context.nil;
         }
-        // NOTE: since MatchData ($~) is escaping - always tag it as used (if setBackref == true)
-        IRubyObject match = setBackref ? getBackRef(context) : holder[0];
-        if (block.isGiven()) return block.yield(context, match);
-        return match;
+
+        IRubyObject backref = getBackRefInternal(context, holder);
+        if (block.isGiven()) return block.yield(context, backref);
+        return backref;
     }
 
     /**
@@ -1267,33 +1265,39 @@ public class RubyRegexp extends RubyObject implements ReOptions, EncodingCapable
         return search(context, str, pos, reverse, holder);
     }
 
-    final boolean startsWith(ThreadContext context, RubyString str) {
+
+    public final RubyBoolean startWithP(ThreadContext context, RubyString str) {
         final ByteList strBL = str.getByteList();
         final int beg = strBL.begin();
         final Regex reg = preparePattern(str);
+
+        IRubyObject match = getBackRefInternal(context, null);
+        if (match instanceof RubyMatchData) { // ! match.isNil()
+            if (((RubyMatchData) match).used()) match = context.nil;
+        }
 
         final Matcher matcher = reg.matcher(strBL.unsafeBytes(), beg, beg + strBL.realSize());
 
         try {
             int result = matcherMatch(context, matcher, beg, beg + strBL.realSize(), RE_OPTION_NONE);
             if (result == -1) {
-                context.setBackRef(context.nil);
-                return false;
+                setBackRefInternal(context, null, context.nil);
+                return context.fals;
             }
 
-            final RubyMatchData matchData = createMatchData(context, str, matcher, reg);
+            final RubyMatchData matchData;
+            if (match == context.nil) {
+                matchData = createMatchData(context, str, matcher, reg);
+            } else {
+                matchData = createMatchData(context, str, matcher, reg);
+            }
             matchData.regexp = this;
             matchData.infectBy(this);
-            context.setBackRef(matchData);
-            return true;
+            setBackRefInternal(context, null, matchData);
+            return context.tru;
         } catch (JOniException je) {
             throw context.runtime.newRegexpError(je.getMessage());
         }
-    }
-
-    @Deprecated
-    public final RubyBoolean startWithP(ThreadContext context, RubyString str) {
-        return startsWith(context, str) ? context.tru : context.fals;
     }
 
     /**
@@ -1314,7 +1318,9 @@ public class RubyRegexp extends RubyObject implements ReOptions, EncodingCapable
         final Regex reg = preparePattern(str);
         IRubyObject match = getBackRefInternal(context, holder);
         if (match instanceof RubyMatchData) { // ! match.isNil()
-            if (((RubyMatchData) match).used()) match = context.nil;
+            if (((RubyMatchData) match).used()) {
+                match = context.nil;
+            }
         }
 
         if (!reverse) range += str.size();
@@ -1332,8 +1338,12 @@ public class RubyRegexp extends RubyObject implements ReOptions, EncodingCapable
             if (match == context.nil) {
                 matchData = createMatchData(context, str, matcher, reg);
             } else {
-                matchData = (RubyMatchData) match;
-                matchData.initMatchData(str, matcher, reg);
+                // FIXME: This could be reusing the MatchData object
+                matchData = createMatchData(context, str, matcher, reg);
+                //if (setBackrefStr) {
+                //    matchData.str = str.newFrozen();
+                //    matchData.infectBy(str);
+                //}
             }
             matchData.regexp = this;
             matchData.infectBy(this);
@@ -1358,7 +1368,7 @@ public class RubyRegexp extends RubyObject implements ReOptions, EncodingCapable
 
     static RubyMatchData createMatchData(ThreadContext context, RubyString str, Matcher matcher, Regex pattern) {
         final RubyMatchData match = new RubyMatchData(context.runtime);
-        match.initMatchData(str, matcher, pattern);
+        match.initMatchData(context, str, matcher, pattern);
         return match;
     }
 
@@ -1570,29 +1580,26 @@ public class RubyRegexp extends RubyObject implements ReOptions, EncodingCapable
     */
     public static IRubyObject nth_match(int nth, IRubyObject match) {
         if (match.isNil()) return match;
-        return nth_match(nth, (RubyMatchData) match);
-    }
+        RubyMatchData m = (RubyMatchData)match;
+        m.check();
 
-    static IRubyObject nth_match(int nth, RubyMatchData match) {
-        match.check();
+        Ruby runtime = m.getRuntime();
 
         final int start, end;
-        if (match.regs == null) {
-            if (nth >= 1 || (nth < 0 && ++nth <= 0)) return match.getRuntime().getNil();
-            start = match.begin;
-            end = match.end;
+        if (m.regs == null) {
+            if (nth >= 1 || (nth < 0 && ++nth <= 0)) return runtime.getNil();
+            start = m.begin;
+            end = m.end;
         } else {
-            if (nth >= match.regs.numRegs || (nth < 0 && (nth+=match.regs.numRegs) <= 0)) {
-                return match.getRuntime().getNil();
-            }
-            start = match.regs.beg[nth];
-            end = match.regs.end[nth];
+            if (nth >= m.regs.numRegs || (nth < 0 && (nth+=m.regs.numRegs) <= 0)) return runtime.getNil();
+            start = m.regs.beg[nth];
+            end = m.regs.end[nth];
         }
 
-        if (start == -1) return match.getRuntime().getNil();
+        if (start == -1) return runtime.getNil();
 
-        RubyString str = match.str.makeShared(match.metaClass.runtime, start, end - start);
-        str.infectBy(match);
+        RubyString str = m.str.makeShared(runtime, start, end - start);
+        str.infectBy(m);
         return str;
     }
 
@@ -1634,16 +1641,16 @@ public class RubyRegexp extends RubyObject implements ReOptions, EncodingCapable
      */
     public static IRubyObject match_last(IRubyObject match) {
         if (match.isNil()) return match;
-        RubyMatchData m = (RubyMatchData) match;
+        RubyMatchData m = (RubyMatchData)match;
         m.check();
 
-        if (m.regs == null || m.regs.beg[0] == -1) return m.getRuntime().getNil();
+        if (m.regs == null || m.regs.beg[0] == -1) return match.getRuntime().getNil();
 
         int i;
         for (i = m.regs.numRegs - 1; m.regs.beg[i] == -1 && i > 0; i--);
-        if (i == 0) return m.getRuntime().getNil();
+        if (i == 0) return match.getRuntime().getNil();
 
-        return nth_match(i, m);
+        return nth_match(i, match);
     }
 
     // MRI: ASCGET macro from rb_reg_regsub

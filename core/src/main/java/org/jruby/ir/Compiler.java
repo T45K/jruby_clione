@@ -5,26 +5,24 @@
 package org.jruby.ir;
 
 import org.jruby.Ruby;
+import org.jruby.RubyModule;
 import org.jruby.ast.executable.AbstractScript;
 import org.jruby.ast.executable.Script;
 import org.jruby.ast.executable.ScriptAndCode;
 import org.jruby.compiler.NotCompilableException;
+import org.jruby.ir.interpreter.Interpreter;
 import org.jruby.ir.operands.IRException;
-import org.jruby.ir.persistence.util.IRFileExpert;
 import org.jruby.ir.runtime.IRBreakJump;
-import org.jruby.ir.targets.JVM;
 import org.jruby.ir.targets.JVMVisitor;
 import org.jruby.ir.targets.JVMVisitorMethodContext;
+import org.jruby.parser.StaticScope;
 import org.jruby.runtime.Block;
 import org.jruby.runtime.Helpers;
 import org.jruby.runtime.ThreadContext;
+import org.jruby.runtime.Visibility;
 import org.jruby.runtime.builtin.IRubyObject;
 import org.jruby.util.ClassDefiningClassLoader;
-import org.jruby.util.cli.Options;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
@@ -45,63 +43,32 @@ public class Compiler extends IRTranslator<ScriptAndCode, ClassDefiningClassLoad
 
     @Override
     protected ScriptAndCode execute(final Ruby runtime, final IRScriptBody scope, ClassDefiningClassLoader classLoader) {
-        JVMVisitor visitor;
-        Class compiled;
         byte[] bytecode;
-
-        // Check for eval in any scope, which isn't supported for AOT right now
-        if (scope.anyUsesEval()) {
-            throw new NotCompilableException("AOT not supported for scripts containing eval");
-        }
-
-        boolean cacheClasses = Options.COMPILE_CACHE_CLASSES.load();
+        MethodHandle _compiledHandle;
 
         try {
-            // If we're caching, use AOT-appropriate bytecode
-            visitor = cacheClasses ? JVMVisitor.newForAOT(runtime) : JVMVisitor.newForJIT(runtime);
-
+            JVMVisitor visitor = new JVMVisitor(runtime);
             JVMVisitorMethodContext context = new JVMVisitorMethodContext();
             bytecode = visitor.compileToBytecode(scope, context);
-            compiled = visitor.defineScriptFromBytecode(scope, bytecode, classLoader);
+            Class compiled = visitor.defineFromBytecode(scope, bytecode, classLoader);
+
+            Method compiledMethod = compiled.getMethod("RUBY$script", ThreadContext.class,
+                    StaticScope.class, IRubyObject.class, IRubyObject[].class, Block.class, RubyModule.class, String.class);
+            _compiledHandle = MethodHandles.publicLookup().unreflect(compiledMethod);
         } catch (NotCompilableException nce) {
             throw nce;
-        }
-
-        Script script = getScriptFromClass(compiled);
-
-        if (cacheClasses) {
-            // write class to IR storage
-            File path = IRFileExpert.getIRClassFile(JVM.scriptToClass(scope.getFile()));
-            try (FileOutputStream fos = new FileOutputStream(path)) {
-                fos.write(bytecode);
-
-                if (Options.COMPILE_CACHE_CLASSES_LOGGING.load()) {
-                    System.err.println("saved compiled script as " + path);
-                }
-            } catch (IOException ioe) {
-                throw new RuntimeException(ioe);
-            }
-        }
-
-        return new ScriptAndCode(bytecode, script);
-
-    }
-
-    public static Script getScriptFromClass(Class compiled) {
-        MethodHandle scriptHandle;
-
-        try {
-            Method scriptMethod = compiled.getMethod("run", ThreadContext.class, IRubyObject.class, boolean.class);
-            scriptHandle = MethodHandles.publicLookup().unreflect(scriptMethod);
         } catch (Throwable t) {
-            throw new NotCompilableException("failed to load script from class" + compiled.getName(), t);
+            throw new NotCompilableException("failed to compile script " + scope.getId(), t);
         }
 
-        return new AbstractScript() {
+        final MethodHandle compiledHandle = _compiledHandle;
+        final StaticScope staticScope = scope.getStaticScope();
+
+        Script script = new AbstractScript() {
             @Override
             public IRubyObject __file__(ThreadContext context, IRubyObject self, IRubyObject[] args, Block block) {
                 try {
-                    return (IRubyObject) scriptHandle.invokeWithArguments(context, self, false);
+                    return (IRubyObject) compiledHandle.invokeWithArguments(context, staticScope, self, IRubyObject.NULL_ARRAY, block, self.getMetaClass(), null);
                 } catch (Throwable t) {
                     Helpers.throwException(t);
                     return null; // not reached
@@ -110,8 +77,16 @@ public class Compiler extends IRTranslator<ScriptAndCode, ClassDefiningClassLoad
 
             @Override
             public IRubyObject load(ThreadContext context, IRubyObject self, boolean wrap) {
+                // Compiler does not support BEGIN/END yet and should fail to compile above
+
+                // Copied from Interpreter
+                RubyModule currModule = staticScope.getModule();
+
+                staticScope.setModule(currModule);
+                context.setCurrentVisibility(Visibility.PRIVATE);
+
                 try {
-                    return (IRubyObject) scriptHandle.invokeWithArguments(context, self, wrap);
+                    return (IRubyObject) compiledHandle.invokeWithArguments(context, staticScope, self, IRubyObject.NULL_ARRAY, Block.NULL_BLOCK, currModule, null);
                 } catch (IRBreakJump bj) {
                     throw IRException.BREAK_LocalJumpError.getException(context.runtime);
                 } catch (Throwable t) {
@@ -121,6 +96,9 @@ public class Compiler extends IRTranslator<ScriptAndCode, ClassDefiningClassLoad
                 }
             }
         };
+
+        return new ScriptAndCode(bytecode, script);
+
     }
 
 }
