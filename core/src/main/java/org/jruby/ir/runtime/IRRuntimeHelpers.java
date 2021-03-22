@@ -1,7 +1,7 @@
 package org.jruby.ir.runtime;
 
 import com.headius.invokebinder.Signature;
-import java.io.ByteArrayInputStream;
+
 import java.io.IOException;
 import java.lang.invoke.MethodHandle;
 import java.util.ArrayList;
@@ -33,14 +33,13 @@ import org.jruby.RubySymbol;
 import org.jruby.common.IRubyWarnings;
 import org.jruby.exceptions.RaiseException;
 import org.jruby.exceptions.Unrescuable;
+import org.jruby.ext.coverage.CoverageData;
 import org.jruby.internal.runtime.methods.CompiledIRMethod;
 import org.jruby.internal.runtime.methods.CompiledIRNoProtocolMethod;
 import org.jruby.internal.runtime.methods.DynamicMethod;
-import org.jruby.internal.runtime.methods.InterpretedIRBodyMethod;
 import org.jruby.internal.runtime.methods.InterpretedIRMetaClassBody;
 import org.jruby.internal.runtime.methods.InterpretedIRMethod;
 import org.jruby.internal.runtime.methods.MixedModeIRMethod;
-import org.jruby.ir.IRMetaClassBody;
 import org.jruby.ir.IRScope;
 import org.jruby.ir.IRScopeType;
 import org.jruby.ir.IRScriptBody;
@@ -60,6 +59,7 @@ import org.jruby.runtime.BlockBody;
 import org.jruby.runtime.CallSite;
 import org.jruby.runtime.CallType;
 import org.jruby.runtime.DynamicScope;
+import org.jruby.runtime.Frame;
 import org.jruby.runtime.Helpers;
 import org.jruby.runtime.IRBlockBody;
 import org.jruby.runtime.JavaSites.IRRuntimeHelpersSites;
@@ -128,17 +128,11 @@ public class IRRuntimeHelpers {
         if (inLambda(block.type)) return; // break/return in lambda is unconditionally a return.
 
         DynamicScope returnToScope = getContainingReturnToScope(currentScope);
-        if (returnToScope != null) { // we found a valid return scope...but is it higher up the stack?
-            StaticScope staticScope = returnToScope.getStaticScope();
-            boolean inDefineMethod = staticScope.isArgumentScope() && staticScope.getScopeType().isBlock();
-            boolean topLevel = staticScope.getScopeType() == IRScopeType.SCRIPT_BODY;
 
-            if ((definedWithinMethod || inDefineMethod || topLevel) && context.scopeExistsOnCallStack(returnToScope)) {
-                return;
-            }
+        if (returnToScope == null || !context.scopeExistsOnCallStack(returnToScope)) {
+            throw IRException.RETURN_LocalJumpError.getException(context.runtime);
         }
 
-        throw IRException.RETURN_LocalJumpError.getException(context.runtime);
     }
 
     /*
@@ -168,21 +162,13 @@ public class IRRuntimeHelpers {
 
         assert returnToScope != null: "accidental return scope";
 
-        throw IRReturnJump.create(currentScope.getStaticScope().getIRScope(), returnToScope, returnValue);
+        throw IRReturnJump.create(currentScope.getStaticScope(), returnToScope, returnValue);
     }
 
     // Finds static scope of where we want to *return* to.
     private static DynamicScope getContainingReturnToScope(DynamicScope returnLocationScope) {
         for (DynamicScope current = returnLocationScope; current != null; current = current.getParentScope()) {
-            StaticScope staticScope = current.getStaticScope();
-            IRScopeType scopeType = staticScope.getScopeType();
-
-            // We hit a method boundary (actual method or a define_method closure) or we exit out of a script/file.
-            if (scopeType.isMethodType() ||                              // Contained within a method
-                    scopeType.isBlock() && staticScope.isArgumentScope() ||  // Contained within define_method closure
-                    scopeType == IRScopeType.SCRIPT_BODY) {              // (2.5+) Contained within a script
-                return current;
-            }
+            if (current.isReturnTarget()) return current;
         }
 
         return null;
@@ -495,12 +481,19 @@ public class IRRuntimeHelpers {
         return runtime.newProc(LAMBDA, block);
     }
 
+    @JIT
     public static IRubyObject yield(ThreadContext context, Block b, IRubyObject yieldVal, boolean unwrapArray) {
         return (unwrapArray && (yieldVal instanceof RubyArray)) ? b.yieldArray(context, yieldVal, null) : b.yield(context, yieldVal);
     }
 
+    @JIT
     public static IRubyObject yieldSpecific(ThreadContext context, Block b) {
         return b.yieldSpecific(context);
+    }
+
+    @JIT
+    public static IRubyObject yieldValues(ThreadContext context, Block blk, IRubyObject[] args) {
+        return blk.yieldValues(context, args);
     }
 
     public static IRubyObject[] convertValueIntoArgArray(ThreadContext context, IRubyObject value,
@@ -653,6 +646,21 @@ public class IRRuntimeHelpers {
         return (!booting && print) || (booting && printAll);
     }
 
+    /**
+     * Update coverage data for the given file and zero-based line number.
+     *
+     * @param context
+     * @param filename
+     * @param line
+     */
+    public static void updateCoverage(ThreadContext context, String filename, int line) {
+        CoverageData data = context.runtime.getCoverageData();
+
+        if (data.isCoverageEnabled()) {
+            data.coverLine(filename, line);
+        }
+    }
+
     private static class DivvyKeywordsVisitor extends RubyHash.VisitorWithState {
         RubyHash syms;
         RubyHash others;
@@ -725,7 +733,7 @@ public class IRRuntimeHelpers {
     public static DynamicScope prepareScriptScope(ThreadContext context, StaticScope scope) {
         IRScope irScope = scope.getIRScope();
 
-        if (irScope.isScriptScope()) {
+        if (irScope != null && irScope.isScriptScope()) {
             DynamicScope tlbScope = ((IRScriptBody) irScope).getScriptDynamicScope();
             if (tlbScope != null) {
                 context.preScopedBody(tlbScope);
@@ -839,8 +847,8 @@ public class IRRuntimeHelpers {
     }
 
     @JIT @Interp
-    public static IRubyObject isDefinedConstantOrMethod(ThreadContext context, IRubyObject receiver, String name, IRubyObject definedConstantMessage, IRubyObject definedMethodMessage) {
-        IRubyObject definedType = Helpers.getDefinedConstantOrBoundMethod(receiver, name, definedConstantMessage, definedMethodMessage);
+    public static IRubyObject isDefinedConstantOrMethod(ThreadContext context, IRubyObject receiver, RubyString name, IRubyObject definedConstantMessage, IRubyObject definedMethodMessage) {
+        IRubyObject definedType = Helpers.getDefinedConstantOrBoundMethod(receiver, name.intern().idString(), definedConstantMessage, definedMethodMessage);
 
         return definedType == null ? context.nil : definedType;
     }
@@ -1156,10 +1164,14 @@ public class IRRuntimeHelpers {
         return instanceSuper(context, self, methodName, definingModule, splatArguments(args, splatMap), block);
     }
 
+    @JIT // for JVM6
+    public static IRubyObject instanceSuperIterSplatArgs(ThreadContext context, IRubyObject self, String methodName, RubyModule definingModule, IRubyObject[] args, Block block, boolean[] splatMap) {
+        return instanceSuperIter(context, self, methodName, definingModule, splatArguments(args, splatMap), block);
+    }
+
     @Interp
     public static IRubyObject instanceSuper(ThreadContext context, IRubyObject self, String id, RubyModule definingModule, IRubyObject[] args, Block block) {
-        RubyClass superClass = definingModule.getMethodLocation().getSuperClass();
-        CacheEntry entry = superClass != null ? superClass.searchWithCache(id) : CacheEntry.NULL_CACHE;
+        CacheEntry entry = getSuperMethodEntry(id, definingModule);
         DynamicMethod method = entry.method;
 
         if (method.isUndefined()) {
@@ -1169,26 +1181,62 @@ public class IRRuntimeHelpers {
         return method.call(context, self, entry.sourceModule, id, args, block);
     }
 
+    @Interp
+    public static IRubyObject instanceSuperIter(ThreadContext context, IRubyObject self, String id, RubyModule definingModule, IRubyObject[] args, Block block) {
+        try {
+            return instanceSuper(context, self, id, definingModule, args, block);
+        } finally {
+            block.escape();
+        }
+    }
+
+    private static CacheEntry getSuperMethodEntry(String id, RubyModule definingModule) {
+        RubyClass superClass = definingModule.getMethodLocation().getSuperClass();
+        return superClass != null ? superClass.searchWithCache(id) : CacheEntry.NULL_CACHE;
+    }
+
     @JIT // for JVM6
     public static IRubyObject classSuperSplatArgs(ThreadContext context, IRubyObject self, String methodName, RubyModule definingModule, IRubyObject[] args, Block block, boolean[] splatMap) {
         return classSuper(context, self, methodName, definingModule, splatArguments(args, splatMap), block);
     }
 
-    @Interp
-    public static IRubyObject classSuper(ThreadContext context, IRubyObject self, String id, RubyModule definingModule, IRubyObject[] args, Block block) {
-        RubyClass superClass = definingModule.getMetaClass().getMethodLocation().getSuperClass();
-        CacheEntry entry = superClass != null ? superClass.searchWithCache(id) : CacheEntry.NULL_CACHE;
-        DynamicMethod method = entry.method;
-        IRubyObject rVal = method.isUndefined() ?
-            Helpers.callMethodMissing(context, self, method.getVisibility(), id, CallType.SUPER, args, block)
-                : method.call(context, self, entry.sourceModule, id, args, block);
-        return rVal;
+    @JIT // for JVM6
+    public static IRubyObject classSuperIterSplatArgs(ThreadContext context, IRubyObject self, String methodName, RubyModule definingModule, IRubyObject[] args, Block block, boolean[] splatMap) {
+        return classSuperIter(context, self, methodName, definingModule, splatArguments(args, splatMap), block);
     }
 
+    @Interp
+    public static IRubyObject classSuper(ThreadContext context, IRubyObject self, String id, RubyModule definingModule, IRubyObject[] args, Block block) {
+        CacheEntry entry = getSuperMethodEntry(id, definingModule.getMetaClass());
+        DynamicMethod method = entry.method;
+
+        if (method.isUndefined()) {
+            return Helpers.callMethodMissing(context, self, method.getVisibility(), id, CallType.SUPER, args, block);
+        }
+
+        return method.call(context, self, entry.sourceModule, id, args, block);
+    }
+
+    @Interp
+    public static IRubyObject classSuperIter(ThreadContext context, IRubyObject self, String id, RubyModule definingModule, IRubyObject[] args, Block block) {
+        try {
+            return classSuper(context, self, id, definingModule, args, block);
+        } finally {
+            block.escape();
+        }
+    }
+
+    @JIT
     public static IRubyObject unresolvedSuperSplatArgs(ThreadContext context, IRubyObject self, IRubyObject[] args, Block block, boolean[] splatMap) {
         return unresolvedSuper(context, self, splatArguments(args, splatMap), block);
     }
 
+    @JIT
+    public static IRubyObject unresolvedSuperIterSplatArgs(ThreadContext context, IRubyObject self, IRubyObject[] args, Block block, boolean[] splatMap) {
+        return unresolvedSuperIter(context, self, splatArguments(args, splatMap), block);
+    }
+
+    @Interp
     public static IRubyObject unresolvedSuper(ThreadContext context, IRubyObject self, IRubyObject[] args, Block block) {
         // We have to rely on the frame stack to find the implementation class
         RubyModule klazz = context.getFrameKlazz();
@@ -1207,6 +1255,15 @@ public class IRRuntimeHelpers {
         }
 
         return rVal;
+    }
+
+    @Interp
+    public static IRubyObject unresolvedSuperIter(ThreadContext context, IRubyObject self, IRubyObject[] args, Block block) {
+        try {
+            return unresolvedSuper(context, self, args, block);
+        } finally {
+            block.escape();
+        }
     }
 
     // MRI: vm_search_normal_superclass
@@ -1419,7 +1476,7 @@ public class IRRuntimeHelpers {
      */
     @Interp
     public static DynamicMethod newInterpretedMetaClass(Ruby runtime, IRScope metaClassBody, IRubyObject obj) {
-        RubyClass singletonClass = newMetaClassFromIR(runtime, metaClassBody, obj);
+        RubyClass singletonClass = newMetaClassFromIR(runtime, metaClassBody.getStaticScope(), obj, metaClassBody.maybeUsingRefinements());
 
         return new InterpretedIRMetaClassBody(metaClassBody, singletonClass);
     }
@@ -1428,103 +1485,84 @@ public class IRRuntimeHelpers {
      * Construct a new DynamicMethod to wrap the given IRModuleBody and singletonizable object. Used by JIT.
      */
     @JIT
-    public static DynamicMethod newCompiledMetaClass(ThreadContext context, MethodHandle handle, IRScope metaClassBody, IRubyObject obj) {
-        RubyClass singletonClass = newMetaClassFromIR(context.runtime, metaClassBody, obj);
+    public static DynamicMethod newCompiledMetaClass(ThreadContext context, MethodHandle handle, StaticScope scope, IRubyObject obj, int line, boolean refinements, boolean dynscopeEliminated) {
+        RubyClass singletonClass = newMetaClassFromIR(context.runtime, scope, obj, refinements);
 
-        return new CompiledIRNoProtocolMethod(handle, metaClassBody, singletonClass);
+        return new CompiledIRNoProtocolMethod(handle, scope, scope.getFile(), line,
+                singletonClass, !dynscopeEliminated);
     }
 
-    private static RubyClass newMetaClassFromIR(Ruby runtime, IRScope metaClassBody, IRubyObject obj) {
+    private static RubyClass newMetaClassFromIR(Ruby runtime, StaticScope scope, IRubyObject obj, boolean refinements) {
         RubyClass singletonClass = Helpers.getSingletonClass(runtime, obj);
 
-        StaticScope metaClassScope = metaClassBody.getStaticScope();
+        scope.setModule(singletonClass);
 
-        metaClassScope.setModule(singletonClass);
-
-        metaClassBody.captureParentRefinements(runtime.getCurrentContext());
+        if (refinements) scope.captureParentRefinements(runtime.getCurrentContext());
 
         return singletonClass;
     }
 
-    /**
-     * Construct a new DynamicMethod to wrap the given IRModuleBody and singletonizable object. Used by interpreter.
-     */
-    @Interp
-    public static DynamicMethod newInterpretedModuleBody(ThreadContext context, IRScope irModule, Object rubyContainer) {
-        RubyModule newRubyModule = newRubyModuleFromIR(context, irModule, rubyContainer);
-        return new InterpretedIRBodyMethod(irModule, newRubyModule);
-    }
-
     @JIT
-    public static DynamicMethod newCompiledModuleBody(ThreadContext context, MethodHandle handle, IRScope irModule, Object rubyContainer) {
-        RubyModule newRubyModule = newRubyModuleFromIR(context, irModule, rubyContainer);
-        return new CompiledIRMethod(handle, irModule, Visibility.PUBLIC, newRubyModule);
+    public static DynamicMethod newCompiledModuleBody(ThreadContext context, MethodHandle handle, String id, int line,
+                                                      StaticScope scope, Object rubyContainer, boolean maybeRefined) {
+        RubyModule newRubyModule = newRubyModuleFromIR(context, id, scope, rubyContainer, maybeRefined);
+
+        return new CompiledIRMethod(handle,id, line, scope, Visibility.PUBLIC, newRubyModule);
     }
 
     @Interp @JIT
-    public static RubyModule newRubyModuleFromIR(ThreadContext context, IRScope irModule, Object rubyContainer) {
+    public static RubyModule newRubyModuleFromIR(ThreadContext context, String id, StaticScope scope,
+                                                 Object rubyContainer, boolean maybeRefined) {
         if (!(rubyContainer instanceof RubyModule)) {
             throw context.runtime.newTypeError("no outer class/module");
         }
 
-        RubyModule newRubyModule = ((RubyModule) rubyContainer).defineOrGetModuleUnder(irModule.getId());
-        irModule.getStaticScope().setModule(newRubyModule);
+        RubyModule newRubyModule = ((RubyModule) rubyContainer).defineOrGetModuleUnder(id);
+        scope.setModule(newRubyModule);
 
-        irModule.captureParentRefinements(context);
+        if (maybeRefined) scope.captureParentRefinements(context);
 
         return newRubyModule;
     }
 
-    @Interp
-    public static DynamicMethod newInterpretedClassBody(ThreadContext context, IRScope irClassBody, Object container, Object superClass) {
-        RubyModule newRubyClass = newRubyClassFromIR(context.runtime, irClassBody, superClass, container);
-
-        return new InterpretedIRBodyMethod(irClassBody, newRubyClass);
-    }
-
     @JIT
-    public static DynamicMethod newCompiledClassBody(ThreadContext context, MethodHandle handle, IRScope irClassBody, Object container, Object superClass) {
-        RubyModule newRubyClass = newRubyClassFromIR(context.runtime, irClassBody, superClass, container);
+    public static DynamicMethod newCompiledClassBody(ThreadContext context, MethodHandle handle, String id, int line,
+                                                     StaticScope scope, Object container,
+                                                     Object superClass, boolean maybeRefined) {
+        RubyModule newRubyClass = newRubyClassFromIR(context.runtime, id, scope, superClass, container, maybeRefined);
 
-        return new CompiledIRMethod(handle, irClassBody, Visibility.PUBLIC, newRubyClass);
+        return new CompiledIRMethod(handle, id, line, scope, Visibility.PUBLIC, newRubyClass);
     }
 
     @Interp @JIT
-    public static RubyModule newRubyClassFromIR(Ruby runtime, IRScope irClassBody, Object superClass, Object container) {
-        if (!(container instanceof RubyModule)) {
-            throw runtime.newTypeError("no outer class/module");
-        }
+    public static RubyModule newRubyClassFromIR(Ruby runtime, String id, StaticScope scope, Object superClass,
+                                                Object container, boolean maybeRefined) {
+        if (!(container instanceof RubyModule)) throw runtime.newTypeError("no outer class/module");
 
-        RubyModule newRubyClass;
-
-        if (irClassBody instanceof IRMetaClassBody) {
-            newRubyClass = ((RubyModule)container).getMetaClass();
+        RubyClass sc;
+        if (superClass == UndefinedValue.UNDEFINED) {
+            sc = null;
         } else {
-            RubyClass sc;
-            if (superClass == UndefinedValue.UNDEFINED) {
-                sc = null;
-            } else {
-                RubyClass.checkInheritable((IRubyObject) superClass);
+            RubyClass.checkInheritable((IRubyObject) superClass);
 
-                sc = (RubyClass) superClass;
-            }
-
-            newRubyClass = ((RubyModule)container).defineOrGetClassUnder(irClassBody.getId(), sc);
+            sc = (RubyClass) superClass;
         }
 
-        irClassBody.getStaticScope().setModule(newRubyClass);
+        RubyModule newRubyClass = ((RubyModule)container).defineOrGetClassUnder(id, sc);
 
-        irClassBody.captureParentRefinements(runtime.getCurrentContext());
+        scope.setModule(newRubyClass);
+
+        if (maybeRefined) scope.captureParentRefinements(runtime.getCurrentContext());
 
         return newRubyClass;
     }
 
     @Interp
     public static void defInterpretedClassMethod(ThreadContext context, IRScope method, IRubyObject obj) {
-        RubySymbol methodName = method.getName();
-        RubyClass rubyClass = checkClassForDef(context, method, obj);
+        String id = method.getId();
+        RubyClass rubyClass = checkClassForDef(context, id, obj);
 
-        method.captureParentRefinements(context);
+        if (method.maybeUsingRefinements()) method.getStaticScope().captureParentRefinements(context);
 
         DynamicMethod newMethod;
         if (context.runtime.getInstanceConfig().getCompileMode() == RubyInstanceConfig.CompileMode.OFF) {
@@ -1533,39 +1571,50 @@ public class IRRuntimeHelpers {
             newMethod = new MixedModeIRMethod(method, Visibility.PUBLIC, rubyClass);
         }
 
-        rubyClass.addMethod(methodName.idString(), newMethod);
-        if (!rubyClass.isRefinement()) obj.callMethod(context, "singleton_method_added", methodName);
+        rubyClass.addMethod(id, newMethod);
+        if (!rubyClass.isRefinement()) obj.callMethod(context, "singleton_method_added", method.getName());
     }
 
     @JIT
-    public static void defCompiledClassMethod(ThreadContext context, MethodHandle handle, IRScope method, IRubyObject obj) {
-        RubySymbol methodName = method.getName();
-        RubyClass rubyClass = checkClassForDef(context, method, obj);
+    public static void defCompiledClassMethod(ThreadContext context, MethodHandle handle, String id, int line,
+                                              StaticScope scope, String encodedArgumentDescriptors,
+                                              IRubyObject obj, boolean maybeRefined, boolean receivesKeywordArgs,
+                                              boolean needsToFindImplementer) {
+        RubyClass rubyClass = checkClassForDef(context, id, obj);
 
-        method.captureParentRefinements(context);
+        if (maybeRefined) scope.captureParentRefinements(context);
 
         // FIXME: needs checkID and proper encoding to force hard symbol
-        rubyClass.addMethod(methodName.idString(), new CompiledIRMethod(handle, method, Visibility.PUBLIC, rubyClass));
+        rubyClass.addMethod(id,
+                new CompiledIRMethod(handle, null, -1, id, line, scope, Visibility.PUBLIC, rubyClass,
+                        encodedArgumentDescriptors, receivesKeywordArgs, needsToFindImplementer));
+
         if (!rubyClass.isRefinement()) {
             // FIXME: needs checkID and proper encoding to force hard symbol
-            obj.callMethod(context, "singleton_method_added", methodName);
+            obj.callMethod(context, "singleton_method_added", context.runtime.newSymbol(id));
         }
     }
 
     @JIT
-    public static void defCompiledClassMethod(ThreadContext context, MethodHandle variable, MethodHandle specific, int specificArity, IRScope method, IRubyObject obj) {
-        RubyClass rubyClass = checkClassForDef(context, method, obj);
+    public static void defCompiledClassMethod(ThreadContext context, MethodHandle variable, MethodHandle specific,
+                                              int specificArity, String id, int line, StaticScope scope,
+                                              String encodedArgumentDescriptors,
+                                              IRubyObject obj, boolean maybeRefined, boolean receivesKeywordArgs,
+                                              boolean needsToFindImplementer) {
+        RubyClass rubyClass = checkClassForDef(context, id, obj);
 
-        method.captureParentRefinements(context);
+        if (maybeRefined) scope.captureParentRefinements(context);
 
-        rubyClass.addMethod(method.getId(), new CompiledIRMethod(variable, specific, specificArity, method, Visibility.PUBLIC, rubyClass));
+        rubyClass.addMethod(id, new CompiledIRMethod(variable, specific, specificArity, id, line, scope,
+                Visibility.PUBLIC, rubyClass, encodedArgumentDescriptors, receivesKeywordArgs, needsToFindImplementer));
 
-        if (!rubyClass.isRefinement()) obj.callMethod(context, "singleton_method_added", method.getName());
+        if (!rubyClass.isRefinement()) obj.callMethod(context, "singleton_method_added", context.runtime.newSymbol(id));
     }
 
-    private static RubyClass checkClassForDef(ThreadContext context, IRScope method, IRubyObject obj) {
+    private static RubyClass checkClassForDef(ThreadContext context, String id, IRubyObject obj) {
         if (obj instanceof RubyFixnum || obj instanceof RubySymbol || obj instanceof RubyFloat) {
-            throw context.runtime.newTypeError(str(context.runtime, "can't define singleton method \"", method.getName(), "\" for ", obj.getMetaClass().rubyBaseName()));
+            throw context.runtime.newTypeError(str(context.runtime, "can't define singleton method \"",
+                    ids(context.runtime, id), "\" for ", obj.getMetaClass().rubyBaseName()));
         }
 
         // if (obj.isFrozen()) throw context.runtime.newFrozenError("object");
@@ -1582,7 +1631,7 @@ public class IRRuntimeHelpers {
         Visibility currVisibility = context.getCurrentVisibility();
         Visibility newVisibility = Helpers.performNormalMethodChecksAndDetermineVisibility(runtime, rubyClass, methodName, currVisibility);
 
-        method.captureParentRefinements(context);
+        if (method.maybeUsingRefinements()) method.getStaticScope().captureParentRefinements(context);
 
         DynamicMethod newMethod;
         if (runtime.getInstanceConfig().getCompileMode() == RubyInstanceConfig.CompileMode.OFF) {
@@ -1595,34 +1644,43 @@ public class IRRuntimeHelpers {
     }
 
     @JIT
-    public static void defCompiledInstanceMethod(ThreadContext context, MethodHandle handle, IRScope method, DynamicScope currDynScope, IRubyObject self) {
+    public static void defCompiledInstanceMethod(ThreadContext context, MethodHandle handle, String id, int line,
+                                                 StaticScope scope, String encodedArgumentDescriptors,
+                                                 DynamicScope currDynScope, IRubyObject self, boolean maybeRefined,
+                                                 boolean receivesKeywordArgs, boolean needsToFindImplementer) {
         Ruby runtime = context.runtime;
-        RubySymbol methodName = method.getName();
+        RubySymbol methodName = runtime.newSymbol(id);
         RubyModule clazz = findInstanceMethodContainer(context, currDynScope, self);
 
         Visibility currVisibility = context.getCurrentVisibility();
         Visibility newVisibility = Helpers.performNormalMethodChecksAndDetermineVisibility(runtime, clazz, methodName, currVisibility);
 
-        method.captureParentRefinements(context);
+        if (maybeRefined) scope.captureParentRefinements(context);
 
-        DynamicMethod newMethod = new CompiledIRMethod(handle, method, newVisibility, clazz);
+        DynamicMethod newMethod = new CompiledIRMethod(handle, null, -1, id, line, scope,
+                newVisibility, clazz, encodedArgumentDescriptors, receivesKeywordArgs, needsToFindImplementer);
 
         // FIXME: needs checkID and proper encoding to force hard symbol
         Helpers.addInstanceMethod(clazz, methodName, newMethod, currVisibility, context, runtime);
     }
 
     @JIT
-    public static void defCompiledInstanceMethod(ThreadContext context, MethodHandle variable, MethodHandle specific, int specificArity, IRScope method, DynamicScope currDynScope, IRubyObject self) {
+    public static void defCompiledInstanceMethod(ThreadContext context, MethodHandle variable, MethodHandle specific,
+                                                 int specificArity, String id, int line, StaticScope scope,
+                                                 String encodedArgumentDescriptors,
+                                                 DynamicScope currDynScope, IRubyObject self, boolean maybeRefined,
+                                                 boolean receivesKeywordArgs, boolean needsToFindImplementer) {
         Ruby runtime = context.runtime;
-        RubySymbol methodName = method.getName();
+        RubySymbol methodName = runtime.newSymbol(id);
         RubyModule clazz = findInstanceMethodContainer(context, currDynScope, self);
 
         Visibility currVisibility = context.getCurrentVisibility();
         Visibility newVisibility = Helpers.performNormalMethodChecksAndDetermineVisibility(runtime, clazz, methodName, currVisibility);
 
-        method.captureParentRefinements(context);
+        if (maybeRefined) scope.captureParentRefinements(context);
 
-        DynamicMethod newMethod = new CompiledIRMethod(variable, specific, specificArity, method, newVisibility, clazz);
+        DynamicMethod newMethod = new CompiledIRMethod(variable, specific, specificArity, id, line, scope,
+                newVisibility, clazz, encodedArgumentDescriptors, receivesKeywordArgs, needsToFindImplementer);
 
         // FIXME: needs checkID and proper encoding to force hard symbol
         Helpers.addInstanceMethod(clazz, methodName, newMethod, currVisibility, context, runtime);
@@ -1806,7 +1864,7 @@ public class IRRuntimeHelpers {
     }
 
     @JIT
-    public static RefinedCachingCallSite newRefinedCachingCallSite(String name, IRScope scope, String callType) {
+    public static RefinedCachingCallSite newRefinedCachingCallSite(String name, StaticScope scope, String callType) {
         return new RefinedCachingCallSite(name, scope, CallType.valueOf(callType));
     }
 
@@ -2065,12 +2123,13 @@ public class IRRuntimeHelpers {
      * Create a new Symbol.to_proc for the given symbol name and encoding.
      *
      * @param context
-     * @param id
+     * @param value
      * @return
      */
     @JIT
-    public static RubyProc newSymbolProc(ThreadContext context, String id) {
-        return (RubyProc) context.runtime.newSymbol(id).to_proc(context);
+    public static RubyProc newSymbolProc(ThreadContext context, ByteList value) {
+        RubySymbol symbol = RubySymbol.newSymbol(context.runtime, value);
+        return IRRuntimeHelpers.newSymbolProc(context, symbol);
     }
 
     /**
@@ -2098,9 +2157,16 @@ public class IRRuntimeHelpers {
 
     @JIT
     public static Block prepareBlock(ThreadContext context, IRubyObject self, DynamicScope scope, BlockBody body) {
-        Block block = new Block(body, context.currentBinding(self, scope));
+        Binding binding = newFrameScopeBinding(context, self, scope);
 
-        return block;
+        return new Block(body, binding);
+    }
+
+    public static Binding newFrameScopeBinding(ThreadContext context, IRubyObject self, DynamicScope scope) {
+        Frame frame = context.getCurrentFrame().capture();
+        Binding binding = new Binding(self, frame, frame.getVisibility(), scope);
+        binding.setMethod(frame.getName());
+        return binding;
     }
 
     public static RubyString newFrozenString(ThreadContext context, ByteList bytelist, int coderange, String file, int line) {
@@ -2142,7 +2208,7 @@ public class IRRuntimeHelpers {
 
     @JIT
     public static IRubyObject callOptimizedAref(ThreadContext context, IRubyObject caller, IRubyObject target, RubyString keyStr, CallSite site) {
-        if (target instanceof RubyHash && ((CachingCallSite) site).isBuiltin(target.getMetaClass())) {
+        if (target instanceof RubyHash && ((CachingCallSite) site).isBuiltin(target)) {
             // call directly with cached frozen string
             return ((RubyHash) target).op_aref(context, keyStr);
         }
@@ -2154,14 +2220,16 @@ public class IRRuntimeHelpers {
      * asString using a given call site
      */
     @JIT
-    public static IRubyObject asString(ThreadContext context, IRubyObject caller, IRubyObject target, CallSite site) {
+    public static RubyString asString(ThreadContext context, IRubyObject caller, IRubyObject target, CallSite site) {
         IRubyObject str = site.call(context, caller, target);
 
-        if (!(str instanceof RubyString)) return target.anyToString();
+        if (!(str instanceof RubyString)) {
+            return (RubyString) target.anyToString();
+        }
 
         if (target.isTaint()) str.setTaint(true);
 
-        return str;
+        return (RubyString) str;
     }
 
     @JIT
@@ -2181,8 +2249,10 @@ public class IRRuntimeHelpers {
 
     @JIT @Interp
     public static RubyString getFileNameStringFromScope(ThreadContext context, StaticScope currScope) {
+        String file = currScope.getFile();
+
         // FIXME: Not very efficient to do all this every time
-        return context.runtime.newString(currScope.getIRScope().getFile());
+        return context.runtime.newString(file);
     }
 
     @JIT

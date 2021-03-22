@@ -199,12 +199,19 @@ public class RubyBignum extends RubyInteger {
      * This is here because for C extensions ulong can hold different values without throwing a RangeError
      */
     public static long big2ulong(RubyBignum value) {
+        Ruby runtime = value.getRuntime();
+
         BigInteger big = value.getValue();
 
-        if (big.compareTo(LONG_MIN) <= 0 || big.compareTo(ULONG_MAX) > 0) {
-            throw value.getRuntime().newRangeError("bignum too big to convert into `ulong'");
+        return big2ulong(runtime, big);
+    }
+
+    public static long big2ulong(Ruby runtime, BigInteger big) {
+        if (big.compareTo(BigInteger.ZERO) < 0 || big.compareTo(ULONG_MAX) > 0) {
+            throw runtime.newRangeError("bignum out of range for `ulong'");
         }
-        return value.getValue().longValue();
+
+        return big.longValue();
     }
 
     /** rb_big2dbl
@@ -506,14 +513,13 @@ public class RubyBignum extends RubyInteger {
     public IRubyObject op_mul(ThreadContext context, IRubyObject other) {
         if (other instanceof RubyFixnum) {
             return op_mul(context, ((RubyFixnum) other).value);
-        }
-        if (other instanceof RubyBignum) {
-            return bignorm(context.runtime, value.multiply(((RubyBignum) other).value));
-        }
-        if (other instanceof RubyFloat) {
+        } else if (other instanceof RubyBignum) {
+        } else if (other instanceof RubyFloat) {
             return RubyFloat.newFloat(context.runtime, big2dbl(this) * ((RubyFloat) other).value);
+        } else {
+            return coerceBin(context, sites(context).op_times, other);
         }
-        return coerceBin(context, sites(context).op_times, other);
+        return bignorm(context.runtime, value.multiply(((RubyBignum) other).value));
     }
 
     @Deprecated
@@ -1208,7 +1214,7 @@ public class RubyBignum extends RubyInteger {
     @Override
     public IRubyObject isNegative(ThreadContext context) {
         CachingCallSite op_lt_site = sites(context).basic_op_lt;
-        if (op_lt_site.retrieveCache(metaClass).method.isBuiltin()) {
+        if (op_lt_site.isBuiltin(metaClass)) {
             return RubyBoolean.newBoolean(context, value.signum() < 0);
         }
         return op_lt_site.call(context, this, this, RubyFixnum.zero(context.runtime));
@@ -1217,7 +1223,7 @@ public class RubyBignum extends RubyInteger {
     @Override
     public IRubyObject isPositive(ThreadContext context) {
         CachingCallSite op_gt_site = sites(context).basic_op_gt;
-        if (op_gt_site.retrieveCache(metaClass).method.isBuiltin()) {
+        if (op_gt_site.isBuiltin(metaClass)) {
             return RubyBoolean.newBoolean(context, value.signum() > 0);
         }
         return op_gt_site.call(context, this, this, RubyFixnum.zero(context.runtime));

@@ -813,6 +813,12 @@ arg             : lhs '=' arg_rhs {
                 | arg tDOT3 arg {
                     $$ = p.dispatch("on_dot3", $1, $3);
                 }
+                | arg tDOT2 {
+                    $$ = p.dispatch("on_dot2", $1);
+                }
+                | arg tDOT3 {
+                    $$ = p.dispatch("on_dot3", $1);
+                }
                 | arg tPLUS arg {
                     $$ = p.dispatch("on_binary", $1, p.intern("+"), $3);
                 }
@@ -1178,7 +1184,7 @@ primary         : literal
                     p.setIsInClass($<Boolean>4.booleanValue());
                 }
                 | keyword_class tLSHFT expr {
-                    $$ = new Integer((p.isInClass() ? 2 : 0) & (p.isInDef() ? 1 : 0));
+                    $$ = Integer.valueOf((p.isInClass() ? 2 : 0) & (p.isInDef() ? 1 : 0));
                     p.setInDef(false);
                     p.setIsInClass(false);
                     p.pushLocalScope();

@@ -54,8 +54,8 @@ public class InterpretedIRMethod extends AbstractIRMethod implements Compilable<
 
     @Override
     protected void printMethodIR() {
-        ByteArrayOutputStream baos = IRDumper.printIR(method, false, true);
-        LOG.info("Printing simple IR for " + method.getId() + ":\n" + new String(baos.toByteArray()));
+        ByteArrayOutputStream baos = IRDumper.printIR(getIRScope(), false, true);
+        LOG.info("Printing simple IR for " + getIRScope().getId() + ":\n" + new String(baos.toByteArray()));
     }
 
     @Override
@@ -246,9 +246,9 @@ public class InterpretedIRMethod extends AbstractIRMethod implements Compilable<
         // FIXME: This is only printing out CFG once.  If we keep applying more passes then we
         // will want to print out after those new passes.
         ensureInstrsReady();
-        LOG.info("Executing '" + method.getId() + "'");
+        LOG.info("Executing '" + getIRScope().getId() + "'");
         if (!displayedCFG) {
-            LOG.info(method.debugOutput());
+            LOG.info(getIRScope().debugOutput());
             displayedCFG = true;
         }
     }
@@ -263,14 +263,9 @@ public class InterpretedIRMethod extends AbstractIRMethod implements Compilable<
     // and replace interpreterContext asynchronously.
     private void promoteToFullBuild(ThreadContext context) {
         tryJit(context, this);
-
-        if (IRRuntimeHelpers.shouldPrintIR(context.runtime)) {
-            ByteArrayOutputStream baos = IRDumper.printIR(method, true, true);
-
-            LOG.info("Printing full IR for " + method.getId() + ":\n" + new String(baos.toByteArray()));
-        }
     }
 
+    @Deprecated
     public String getClassName(ThreadContext context) {
         return null;
     }

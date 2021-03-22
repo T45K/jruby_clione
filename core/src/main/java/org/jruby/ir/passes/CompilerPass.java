@@ -2,6 +2,7 @@ package org.jruby.ir.passes;
 
 import org.jruby.ir.interpreter.FullInterpreterContext;
 import org.jruby.util.StringSupport;
+import org.jruby.util.cli.Options;
 import org.jruby.util.log.Logger;
 import org.jruby.util.log.LoggerFactory;
 
@@ -113,7 +114,15 @@ public abstract class CompilerPass {
         // Record this pass
         fic.getExecutedPasses().add(this);
 
+        if (Options.IR_PRINT_OPT.load()) {
+            LOG.info("Printing IR CFG before " + getLabel() + " for " + fic.getScope().getId() + ":\n" + fic.toStringInstrs());
+        }
+
         Object passData = execute(fic, data);
+
+        if (Options.IR_PRINT_OPT.load()) {
+            LOG.info("Printing IR CFG after " + getLabel() + " for " + fic.getScope().getId() + ":\n" + fic.toStringInstrs());
+        }
 
         for (CompilerPassListener listener: fic.getScope().getManager().getListeners()) {
             listener.endExecute(this, fic, passData, childScope);

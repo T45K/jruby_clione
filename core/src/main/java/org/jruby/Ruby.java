@@ -53,7 +53,8 @@ import org.jruby.ast.VCallNode;
 import org.jruby.ast.WhileNode;
 import org.jruby.compiler.Constantizable;
 import org.jruby.compiler.NotCompilableException;
-import org.jruby.ext.jruby.JRubyLibrary;
+import org.jruby.exceptions.LocalJumpError;
+import org.jruby.exceptions.SystemExit;
 import org.jruby.ext.jruby.JRubyUtilLibrary;
 import org.jruby.ext.thread.ConditionVariable;
 import org.jruby.ext.thread.Mutex;
@@ -73,6 +74,7 @@ import org.jruby.parser.StaticScope;
 import org.jruby.runtime.JavaSites;
 import org.jruby.runtime.invokedynamic.InvokeDynamicSupport;
 import org.jruby.util.CommonByteLists;
+import org.jruby.util.JavaNameMangler;
 import org.jruby.util.MRIRecursionGuard;
 import org.jruby.util.StringSupport;
 import org.jruby.util.StrptimeParser;
@@ -167,7 +169,6 @@ import org.jruby.util.ClassDefiningJRubyClassLoader;
 import org.jruby.util.KCode;
 import org.jruby.util.SafePropertyAccessor;
 import org.jruby.util.cli.Options;
-import org.jruby.util.func.Function1;
 import org.jruby.util.io.FilenoUtil;
 import org.jruby.util.io.SelectorPool;
 import org.jruby.util.log.Logger;
@@ -195,10 +196,10 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Stack;
 import java.util.WeakHashMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -209,7 +210,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import java.util.function.ToIntFunction;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static java.lang.invoke.MethodHandles.explicitCastArguments;
 import static java.lang.invoke.MethodHandles.insertArguments;
@@ -239,9 +242,6 @@ public final class Ruby implements Constantizable {
      * The logger used to log relevant bits.
      */
     private static final Logger LOG = LoggerFactory.getLogger(Ruby.class);
-    static { // enable DEBUG output
-        if (RubyInstanceConfig.JIT_LOADING_DEBUG) LOG.setDebugEnable(true);
-    }
 
     /**
      * Create and initialize a new JRuby runtime. The properties of the
@@ -395,6 +395,10 @@ public final class Ruby implements Constantizable {
         threadGroupClass = profile.allowClass("ThreadGroup") ? RubyThreadGroup.createThreadGroupClass(this) : null;
         threadClass = profile.allowClass("Thread") ? RubyThread.createThreadClass(this) : null;
         exceptionClass = profile.allowClass("Exception") ? RubyException.createExceptionClass(this) : null;
+
+        // this is used in some kwargs conversions for numerics below
+        hashClass = profile.allowClass("Hash") ? RubyHash.createHashClass(this) : null;
+
         numericClass = profile.allowClass("Numeric") ? RubyNumeric.createNumericClass(this) : null;
         integerClass = profile.allowClass("Integer") ? RubyInteger.createIntegerClass(this) : null;
         fixnumClass = profile.allowClass("Fixnum") ? RubyFixnum.createFixnumClass(this) : null;
@@ -409,7 +413,6 @@ public final class Ruby implements Constantizable {
 
         complexClass = profile.allowClass("Complex") ? RubyComplex.createComplexClass(this) : null;
         rationalClass = profile.allowClass("Rational") ? RubyRational.createRationalClass(this) : null;
-        hashClass = profile.allowClass("Hash") ? RubyHash.createHashClass(this) : null;
 
         if (profile.allowClass("Array")) {
             arrayClass = RubyArray.createArrayClass(this);
@@ -458,10 +461,14 @@ public final class Ruby implements Constantizable {
             enumeratorClass = RubyEnumerator.defineEnumerator(this, enumerableModule);
             generatorClass = RubyGenerator.createGeneratorClass(this, enumeratorClass);
             yielderClass = RubyYielder.createYielderClass(this);
+            chainClass = RubyChain.createChainClass(this, enumeratorClass);
+            aseqClass = RubyArithmeticSequence.createArithmeticSequenceClass(this, enumeratorClass);
         } else {
             enumeratorClass = null;
             generatorClass = null;
             yielderClass = null;
+            chainClass = null;
+            aseqClass = null;
         }
 
         continuationClass = initContinuation();
@@ -934,6 +941,15 @@ public final class Ruby implements Constantizable {
             return;
         }
 
+        if (Options.COMPILE_CACHE_CLASSES.load()) {
+            Script script = tryScriptFromClass(filename);
+
+            if (script != null) {
+                runScript(script);
+                return;
+            }
+        }
+
         ParseResult parseResult = parseFromMain(filename, inputStream);
 
         // if no DATA, we're done with the stream, shut it down
@@ -964,6 +980,31 @@ public final class Ruby implements Constantizable {
             // TODO: Only interpreter supported so far
             runInterpreter(parseResult);
         }
+    }
+
+    private Script tryScriptFromClass(String filename) {
+        // Try loading from precompiled class file
+        String clsName = JavaNameMangler.mangledFilenameForStartupClasspath(filename);
+        try {
+            ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
+
+            if (systemClassLoader.getResource(clsName + ".class") == null) return null;
+
+            Class scriptClass = systemClassLoader.loadClass(clsName.replace("/", "."));
+
+            if (Options.COMPILE_CACHE_CLASSES_LOGGING.load()) {
+                System.err.println("found class " + scriptClass.getName() + " for " + filename);
+            }
+
+            return Compiler.getScriptFromClass(scriptClass);
+        } catch (ClassNotFoundException cnfe) {
+            // ignore and proceed to parse and execute
+            if (Options.COMPILE_CACHE_CLASSES_LOGGING.load()) {
+                System.err.println("no class found for script " + filename);
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -1111,6 +1152,10 @@ public final class Ruby implements Constantizable {
      * @return The result of executing the script
      */
     public IRubyObject runNormally(Node scriptNode, boolean wrap) {
+        return runNormally(scriptNode, getTopSelf(), wrap);
+    }
+
+    public IRubyObject runNormally(Node scriptNode, IRubyObject self, boolean wrap) {
         ScriptAndCode scriptAndCode = null;
         boolean compile = getInstanceConfig().getCompileMode().shouldPrecompileCLI();
         if (compile || config.isShowBytecode()) {
@@ -1125,7 +1170,7 @@ public final class Ruby implements Constantizable {
                 return getNil();
             }
 
-            return runScript(scriptAndCode.script(), wrap);
+            return runScript(scriptAndCode.script(), self, wrap);
         } else {
             // FIXME: temporarily allowing JIT to fail for $0 and fall back on interpreter
 //            failForcedCompile(scriptNode);
@@ -1202,7 +1247,11 @@ public final class Ruby implements Constantizable {
     }
 
     public IRubyObject runScript(Script script, boolean wrap) {
-        return script.load(getCurrentContext(), getTopSelf(), wrap);
+        return runScript(script, getTopSelf(), wrap);
+    }
+
+    public IRubyObject runScript(Script script, IRubyObject self, boolean wrap) {
+        return script.load(getCurrentContext(), self, wrap);
     }
 
     /**
@@ -1222,7 +1271,7 @@ public final class Ruby implements Constantizable {
              * exit point.  We still raise when jump off point is anything else since that is a bug.
              */
             if (!ex.methodToReturnFrom.getStaticScope().getIRScope().isScriptScope()) {
-                System.err.println("Unexpected 'return' escaped the runtime from " + ex.returnScope + " to " + ex.methodToReturnFrom.getStaticScope().getIRScope());
+                System.err.println("Unexpected 'return' escaped the runtime from " + ex.returnScope.getIRScope() + " to " + ex.methodToReturnFrom.getStaticScope().getIRScope());
                 System.err.println(ThreadContext.createRawBacktraceStringFromThrowable(ex, false));
                 Throwable t = ex;
                 while ((t = t.getCause()) != null) {
@@ -1314,14 +1363,6 @@ public final class Ruby implements Constantizable {
         Enumeration<RubyModule> e = allModules.keys();
         while (e.hasMoreElements()) {
             func.accept(e.nextElement());
-        }
-    }
-
-    @Deprecated
-    public void eachModule(Function1<Object, IRubyObject> func) {
-        Enumeration<RubyModule> e = allModules.keys();
-        while (e.hasMoreElements()) {
-            func.apply(e.nextElement());
         }
     }
 
@@ -1431,7 +1472,7 @@ public final class Ruby implements Constantizable {
             if (!(classObj instanceof RubyClass)) throw newTypeError(str(this, ids(this, id), " is not a class"));
             RubyClass klazz = (RubyClass)classObj;
             if (klazz.getSuperClass().getRealClass() != superClass) {
-                throw newNameError(str(this, ids(this, id), " is already defined"), id);
+                throw newNameError(str(this, ids(this, id), " is already defined"), newSymbol(id));
             }
             // If we define a class in Ruby, but later want to allow it to be defined in Java,
             // the allocator needs to be updated
@@ -1732,11 +1773,9 @@ public final class Ruby implements Constantizable {
 
         if (reflectionWorks) {
             new Java().load(this, false);
-            new JRubyLibrary().load(this, false);
             new JRubyUtilLibrary().load(this, false);
 
             loadService.provide("java", "java.rb");
-            loadService.provide("jruby", "jruby.rb");
             loadService.provide("jruby/util", "jruby/util.rb");
         }
     }
@@ -1938,6 +1977,14 @@ public final class Ruby implements Constantizable {
 
     public RubyClass getGenerator() {
         return generatorClass;
+    }
+
+    public RubyClass getChain() {
+        return chainClass;
+    }
+
+    public RubyClass getArithmeticSequence() {
+        return aseqClass;
     }
 
     public RubyClass getFiber() {
@@ -2773,6 +2820,16 @@ public final class Ruby implements Constantizable {
 
     public void loadFile(String scriptName, InputStream in, boolean wrap) {
         IRubyObject self = wrap ? getTopSelf().rbClone() : getTopSelf();
+
+        if (!wrap && Options.COMPILE_CACHE_CLASSES.load()) {
+            Script script = tryScriptFromClass(scriptName);
+
+            if (script != null) {
+                runScript(script, self, wrap);
+                return;
+            }
+        }
+
         ThreadContext context = getCurrentContext();
 
         try {
@@ -2789,7 +2846,7 @@ public final class Ruby implements Constantizable {
     }
 
     public void loadScope(IRScope scope, boolean wrap) {
-        IRubyObject self = wrap ? TopSelfFactory.createTopSelf(this, true) : getTopSelf();
+        IRubyObject self = wrap ? getTopSelf().rbClone() : getTopSelf();
 
         if (wrap) {
             // toss an anonymous module into the search path
@@ -2802,6 +2859,15 @@ public final class Ruby implements Constantizable {
     public void compileAndLoadFile(String filename, InputStream in, boolean wrap) {
         IRubyObject self = wrap ? getTopSelf().rbClone() : getTopSelf();
 
+        if (!wrap && Options.COMPILE_CACHE_CLASSES.load()) {
+            Script script = tryScriptFromClass(filename);
+
+            if (script != null) {
+                runScript(script, self, wrap);
+                return;
+            }
+        }
+
         ParseResult parseResult = parseFile(filename, in, null);
         RootNode root = (RootNode) parseResult;
 
@@ -2811,17 +2877,22 @@ public final class Ruby implements Constantizable {
             root.getStaticScope().setModule(getObject());
         }
 
-        runNormally(root, wrap);
+        runNormally(root, self, wrap);
     }
 
-    private void wrapWithModule(RubyBasicObject self, ParseResult result) {
+    public StaticScope setupWrappedToplevel(IRubyObject self, StaticScope top) {
         // toss an anonymous module into the search path
         RubyModule wrapper = RubyModule.newModule(this);
-        self.extend(new IRubyObject[] {wrapper});
-        StaticScope top = result.getStaticScope();
+        ((RubyBasicObject) self).extend(new IRubyObject[] {wrapper});
         StaticScope newTop = staticScopeFactory.newLocalScope(null);
         top.setPreviousCRefScope(newTop);
         top.setModule(wrapper);
+
+        return newTop;
+    }
+
+    private void wrapWithModule(RubyBasicObject self, ParseResult result) {
+        setupWrappedToplevel(self, result.getStaticScope());
     }
 
     public void loadScript(Script script) {
@@ -2911,48 +2982,65 @@ public final class Ruby implements Constantizable {
 
     public static class CallTraceFuncHook extends EventHook {
         private RubyProc traceFunc;
+        private final ThreadContext thread; // if non-null only call traceFunc if it is from this thread.
+
+        public CallTraceFuncHook(ThreadContext context) {
+            this.thread = context;
+        }
 
         public void setTraceFunc(RubyProc traceFunc) {
             this.traceFunc = traceFunc;
         }
 
         public void eventHandler(ThreadContext context, String eventName, String file, int line, String name, IRubyObject type) {
-            if (!context.isWithinTrace()) {
-                if (file == null) file = "(ruby)";
-                if (type == null) type = context.nil;
+            if (context.isWithinTrace()) return;
+            if (thread != null && thread != context) return;
 
-                Ruby runtime = context.runtime;
-                RubyBinding binding = RubyBinding.newBinding(runtime, context.currentBinding());
+            if (file == null) file = "(ruby)";
+            if (type == null) type = context.nil;
 
-                // FIXME: Ultimately we should be getting proper string for this event type
-                switch(eventName) {
-                    case "c_return":
-                        eventName = "c-return";
-                        break;
-                    case "c_call":
-                        eventName = "c-call";
-                        break;
-                };
+            Ruby runtime = context.runtime;
+            RubyBinding binding = RubyBinding.newBinding(runtime, context.currentBinding());
 
-                context.preTrace();
-                try {
-                    traceFunc.call(context, new IRubyObject[]{
-                            runtime.newString(eventName), // event name
-                            runtime.newString(file), // filename
-                            runtime.newFixnum(line), // line numbers should be 1-based
-                            name != null ? runtime.newSymbol(name) : runtime.getNil(),
-                            binding,
-                            type
-                    });
-                } finally {
-                    context.postTrace();
-                }
+            // FIXME: Ultimately we should be getting proper string for this event type
+            switch(eventName) {
+                case "c_return":
+                    eventName = "c-return";
+                    break;
+                case "c_call":
+                    eventName = "c-call";
+                    break;
+            };
+
+            context.preTrace();
+            try {
+                traceFunc.call(context, new IRubyObject[]{
+                        runtime.newString(eventName), // event name
+                        runtime.newString(file), // filename
+                        runtime.newFixnum(line), // line numbers should be 1-based
+                        name != null ? runtime.newSymbol(name) : runtime.getNil(),
+                        binding,
+                        type
+                });
+            } finally {
+                context.postTrace();
             }
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (!(other instanceof CallTraceFuncHook)) return false;
+
+            return super.equals(other) && thread == ((CallTraceFuncHook) other).thread;
         }
 
         @Override
         public boolean isInterestedInEvent(RubyEvent event) {
             return interest.contains(event);
+        }
+
+        public ThreadContext getThread() {
+            return thread;
         }
 
         @Override
@@ -2961,7 +3049,7 @@ public final class Ruby implements Constantizable {
         }
     };
 
-    private final CallTraceFuncHook callTraceFuncHook = new CallTraceFuncHook();
+    private final CallTraceFuncHook callTraceFuncHook = new CallTraceFuncHook(null);
 
     public synchronized void addEventHook(EventHook hook) {
         if (!RubyInstanceConfig.FULL_TRACE_ENABLED && hook.needsDebug()) {
@@ -2983,7 +3071,7 @@ public final class Ruby implements Constantizable {
 
         int pivot = -1;
         for (int i = 0; i < hooks.length; i++) {
-            if (hooks[i] == hook) {
+            if (hooks[i].equals(hook)) {
                 pivot = i;
                 break;
             }
@@ -3002,14 +3090,34 @@ public final class Ruby implements Constantizable {
     }
 
     public void setTraceFunction(RubyProc traceFunction) {
-        removeEventHook(callTraceFuncHook);
+        setTraceFunction(callTraceFuncHook, traceFunction);
+    }
 
-        if (traceFunction == null) {
-            return;
-        }
+    public void setTraceFunction(CallTraceFuncHook hook, RubyProc traceFunction) {
+        removeEventHook(hook);
 
-        callTraceFuncHook.setTraceFunc(traceFunction);
-        addEventHook(callTraceFuncHook);
+        if (traceFunction == null) return;
+
+        hook.setTraceFunc(traceFunction);
+        addEventHook(hook);
+    }
+
+    /**
+     * Remove all event hooks which are associated with a particular thread.
+     * @param context the context of the ruby thread we are interested in.
+     */
+    public void removeAllCallEventHooksFor(ThreadContext context) {
+        if (eventHooks.length == 0) return;
+
+        List<EventHook> hooks = new ArrayList<>(Arrays.asList(eventHooks));
+
+        hooks = hooks.stream().filter(hook ->
+                !(hook instanceof CallTraceFuncHook) || !((CallTraceFuncHook) hook).getThread().equals(context)
+        ).collect(Collectors.toList());
+
+        EventHook[] newHooks = new EventHook[hooks.size()];
+        eventHooks = hooks.toArray(newHooks);
+        hasEventHooks = hooks.size() > 0;
     }
 
     public void callEventHooks(ThreadContext context, RubyEvent event, String file, int line, String name, IRubyObject type) {
@@ -3045,34 +3153,56 @@ public final class Ruby implements Constantizable {
     }
 
     /**
+     * Add an exit function to be run on runtime exit. Functions are run in FILO order.
+     *
+     * @param func the function to be run
+     */
+    public void pushExitFunction(ExitFunction func) {
+        exitBlocks.add(0, func);
+    }
+
+    /**
      * Push block onto exit stack.  When runtime environment exits
      * these blocks will be evaluated.
      *
      * @return the element that was pushed onto stack
      */
     public IRubyObject pushExitBlock(RubyProc proc) {
-        atExitBlocks.push(proc);
+        ProcExitFunction func = new ProcExitFunction(proc);
+
+        pushExitFunction(func);
+
         return proc;
+    }
+
+    /**
+     * Add a post-termination exit function that should be run to shut down JRuby internal services.
+     *
+     * This will be run toward the end of teardown, after all user code has finished executing (e.g. at_exit
+     * hooks and user-defined finalizers). The exit functions registered here are run in FILO order.
+     *
+     * @param postExit the {@link ExitFunction} to run after user exit hooks have completed
+     */
+    public void pushPostExitFunction(ExitFunction postExit) {
+        postExitBlocks.add(0, postExit);
     }
 
     /**
      * It is possible for looping or repeated execution to encounter the same END
      * block multiple times.  Rather than store extra runtime state we will just
      * make sure it is not already registered.  at_exit by contrast can push the
-     * same block many times (and should use pushExistBlock).
+     * same block many times (and should use pushExitBlock).
      */
     public void pushEndBlock(RubyProc proc) {
-        if (alreadyRegisteredEndBlock(proc) != null) return;
+        if (alreadyRegisteredEndBlock(proc)) return;
         pushExitBlock(proc);
     }
 
-    private RubyProc alreadyRegisteredEndBlock(RubyProc newProc) {
-        Block block = newProc.getBlock();
-
-        for (RubyProc proc: atExitBlocks) {
-            if (block.equals(proc.getBlock())) return proc;
+    private boolean alreadyRegisteredEndBlock(RubyProc newProc) {
+        if (exitBlocks.stream().anyMatch((func) -> func.matches(newProc))) {
+            return true;
         }
-        return null;
+        return false;
     }
 
     // use this for JRuby-internal finalizers
@@ -3128,89 +3258,34 @@ public final class Ruby implements Constantizable {
     // catch exception. This makes debugging really hard. This is why
     // tearDown(boolean) exists.
     public void tearDown(boolean systemExit) {
-        int status = 0;
-
-        // clear out old style recursion guards so they don't leak
-        mriRecursionGuard = null;
-
         final ThreadContext context = getCurrentContext();
 
-        // FIXME: 73df3d230b9d92c7237d581c6366df1b92ad9b2b exposed no toplevel scope existing anymore (I think the
-        // bogus scope I removed was playing surrogate toplevel scope and wallpapering this bug).  For now, add a
-        // bogus scope back for at_exit block run.  This is buggy if at_exit is capturing vars.
-        if (!context.hasAnyScopes()) {
-            StaticScope topStaticScope = getStaticScopeFactory().newLocalScope(null);
-            context.pushScope(new ManyVarsDynamicScope(topStaticScope, null));
+        int status = userTeardown(context);
+
+        systemTeardown(context);
+
+        if (systemExit && status != 0) {
+            throw newSystemExit(status);
         }
 
-        while (!atExitBlocks.empty()) {
-            RubyProc proc = atExitBlocks.pop();
-            // IRubyObject oldExc = context.runtime.getGlobalVariables().get("$!"); // Save $!
-            try {
-                proc.call(context, IRubyObject.NULL_ARRAY);
-            } catch (RaiseException rj) {
-                // END { return } can generally be statically determined during build time so we generate the LJE
-                // then.  This if captures the static side of this. See IReturnJump below for dynamic case
-                if (rj.getException() instanceof RubyLocalJumpError) {
-                    RubyLocalJumpError rlje = (RubyLocalJumpError) rj.getException();
-                    String filename = proc.getBlock().getBinding().filename;
-
-                    if (rlje.getReason() == RubyLocalJumpError.Reason.RETURN) {
-                        getWarnings().warn(filename, "unexpected return");
-                    } else {
-                        getWarnings().warn(filename, "break from proc-closure");
-                    }
-
-                } else {
-                    RubyException raisedException = rj.getException();
-                    if (!getSystemExit().isInstance(raisedException)) {
-                        status = 1;
-                        printError(raisedException);
-                    } else {
-                        IRubyObject statusObj = raisedException.callMethod(context, "status");
-                        if (statusObj != null && !statusObj.isNil()) {
-                            status = RubyNumeric.fix2int(statusObj);
-                        }
-                    }
-                    // Reset $! now that rj has been handled
-                    // context.runtime.getGlobalVariables().set("$!", oldExc);
-                }
-            }  catch (IRReturnJump e) {
-                // This capture dynamic returns happening in an end block where it cannot be statically determined
-                // (like within an eval.
-
-                // This is partially similar to code in eval_error.c:error_handle but with less actual cases.
-                // IR treats END blocks are closures and as such we see this special non-local return jump type
-                // bubble this far out as we exec each END proc.
-                getWarnings().warn(proc.getBlock().getBinding().filename, "unexpected return");
-            }
-        }
-
-        // Fetches (and unsets) the SIGEXIT handler, if one exists.
-        IRubyObject trapResult = RubySignal.__jtrap_osdefault_kernel(this.getNil(), this.newString("EXIT"));
-        if (trapResult instanceof RubyArray) {
-            IRubyObject[] trapResultEntries = ((RubyArray) trapResult).toJavaArray();
-            IRubyObject exitHandlerProc = trapResultEntries[0];
-            if (exitHandlerProc instanceof RubyProc) {
-                ((RubyProc) exitHandlerProc).call(context, getSingleNilArray());
-            }
-        }
-
-        if (finalizers != null) {
-            synchronized (finalizersMutex) {
-                for (Iterator<Finalizable> finalIter = new ArrayList<>(
-                        finalizers.keySet()).iterator(); finalIter.hasNext();) {
-                    Finalizable f = finalIter.next();
-                    if (f != null) {
-                        try {
-                            f.finalize();
-                        } catch (Throwable t) {
-                            // ignore
-                        }
-                    }
-                    finalIter.remove();
+        // This is a rather gross way to ensure nobody else performs the same clearing of globalRuntime followed by
+        // initializing a new runtime, which would cause our clear below to clear the wrong runtime. Synchronizing
+        // against the class is a problem, but the overhead of teardown and creating new containers should outstrip
+        // a global synchronize around a few field accesses. -CON
+        if (this == globalRuntime) {
+            synchronized (Ruby.class) {
+                if (this == globalRuntime) {
+                    globalRuntime = null;
                 }
             }
+        }
+    }
+
+    private void systemTeardown(ThreadContext context) {
+        // Run post-user exit hooks, such as for shutting down internal JRuby services
+        while (!postExitBlocks.isEmpty()) {
+            ExitFunction fun = postExitBlocks.remove(0);
+            fun.applyAsInt(context);
         }
 
         synchronized (internalFinalizersMutex) {
@@ -3246,29 +3321,67 @@ public final class Ruby implements Constantizable {
             printProfileData(profileCollection);
         }
 
-        // swap with a new service to dereference all thread constructs
-        threadService = new ThreadService(this);
+        // clear out old style recursion guards so they don't leak
+        mriRecursionGuard = null;
 
         // shut down executors
         getJITCompiler().shutdown();
         getExecutor().shutdown();
         getFiberExecutor().shutdown();
 
-        if (systemExit && status != 0) {
-            throw newSystemExit(status);
+        // Fetches (and unsets) the SIGEXIT handler, if one exists.
+        IRubyObject trapResult = RubySignal.__jtrap_osdefault_kernel(this.getNil(), this.newString("EXIT"));
+        if (trapResult instanceof RubyArray) {
+            IRubyObject[] trapResultEntries = ((RubyArray) trapResult).toJavaArray();
+            IRubyObject exitHandlerProc = trapResultEntries[0];
+            if (exitHandlerProc instanceof RubyProc) {
+                ((RubyProc) exitHandlerProc).call(context, getSingleNilArray());
+            }
         }
 
-        // This is a rather gross way to ensure nobody else performs the same clearing of globalRuntime followed by
-        // initializing a new runtime, which would cause our clear below to clear the wrong runtime. Synchronizing
-        // against the class is a problem, but the overhead of teardown and creating new containers should outstrip
-        // a global synchronize around a few field accesses. -CON
-        if (this == globalRuntime) {
-            synchronized (Ruby.class) {
-                if (this == globalRuntime) {
-                    globalRuntime = null;
+        // Shut down and replace thread service after all other hooks and finalizers have run
+        threadService.teardown();
+        threadService = new ThreadService(this);
+
+    }
+
+    private int userTeardown(ThreadContext context) {
+        int status = 0;
+
+        // FIXME: 73df3d230b9d92c7237d581c6366df1b92ad9b2b exposed no toplevel scope existing anymore (I think the
+        // bogus scope I removed was playing surrogate toplevel scope and wallpapering this bug).  For now, add a
+        // bogus scope back for at_exit block run.  This is buggy if at_exit is capturing vars.
+        if (!context.hasAnyScopes()) {
+            StaticScope topStaticScope = getStaticScopeFactory().newLocalScope(null);
+            context.pushScope(new ManyVarsDynamicScope(topStaticScope, null));
+        }
+
+        // Run all exit functions from user hooks like at_exit
+        while (!exitBlocks.isEmpty()) {
+            ExitFunction fun = exitBlocks.remove(0);
+            int ret = fun.applyAsInt(context);
+            if (ret != 0) {
+                status = ret;
+            }
+        }
+
+        if (finalizers != null) {
+            synchronized (finalizersMutex) {
+                for (Iterator<Finalizable> finalIter = new ArrayList<>(
+                        finalizers.keySet()).iterator(); finalIter.hasNext();) {
+                    Finalizable f = finalIter.next();
+                    if (f != null) {
+                        try {
+                            f.finalize();
+                        } catch (Throwable t) {
+                            // ignore
+                        }
+                    }
+                    finalIter.remove();
                 }
             }
         }
+        return status;
     }
 
     /**
@@ -3921,6 +4034,18 @@ public final class Ruby implements Constantizable {
         return new RubyNameError(this, getNameError(), message, name).toThrowable();
     }
 
+    public RaiseException newNameError(String message, IRubyObject name, Throwable exception, boolean printWhenVerbose) {
+        if (exception != null) {
+            if (printWhenVerbose && isVerbose()) {
+                LOG.error(exception);
+            } else if (isDebug()) {
+                LOG.debug(exception);
+            }
+        }
+
+        return new RubyNameError(this, getNameError(), message, name).toThrowable();
+    }
+
     /**
      * Construct a NameError with a pre-formatted message and name.
      *
@@ -3934,6 +4059,11 @@ public final class Ruby implements Constantizable {
     public RaiseException newNameError(String message, String name) {
         return newNameError(message, name, null);
     }
+
+    public RaiseException newNameError(String message, IRubyObject name) {
+        return newNameError(message, name, (Throwable) null, false);
+    }
+
 
     /**
      * Construct a NameError with an optional originating exception and a pre-formatted message.
@@ -4117,9 +4247,14 @@ public final class Ruby implements Constantizable {
     }
 
     /**
-     * @param exceptionClass
-     * @param message
-     * @return
+     * Construct a new RaiseException wrapping a new Ruby exception object appropriate to the given exception class.
+     *
+     * There are additional forms of this construction logic in {@link RaiseException#from}.
+     *
+     * @param exceptionClass the exception class from which to construct the exception object
+     * @param message a simple message for the exception
+     * @return a new RaiseException wrapping a new Ruby exception
+     * @see RaiseException#from(Ruby, RubyClass, String)
      */
     public RaiseException newRaiseException(RubyClass exceptionClass, String message) {
         return RaiseException.from(this, exceptionClass, message);
@@ -4236,7 +4371,7 @@ public final class Ruby implements Constantizable {
 
     public boolean isInspecting(Object obj) {
         Map<Object, Object> val = inspect.get();
-        return val == null ? false : val.containsKey(obj);
+        return val != null && val.containsKey(obj);
     }
 
     public void unregisterInspecting(Object obj) {
@@ -4310,6 +4445,21 @@ public final class Ruby implements Constantizable {
         return posix;
     }
 
+    /**
+     * Get the native POSIX associated with this runtime.
+     *
+     * If native is not supported, this will return null.
+     *
+     * @return a native POSIX, or null if native is not supported
+     */
+    public POSIX getNativePosix() {
+        POSIX nativePosix = this.nativePosix;
+        if (nativePosix == null && config.isNativeEnabled()) {
+            this.nativePosix = nativePosix = POSIXFactory.getNativePOSIX(new JRubyPOSIXHandler(this));
+        }
+        return nativePosix;
+    }
+
     public void setRecordSeparatorVar(GlobalVariable recordSeparatorVar) {
         this.recordSeparatorVar = recordSeparatorVar;
     }
@@ -4357,17 +4507,31 @@ public final class Ruby implements Constantizable {
         return checkpointInvalidator;
     }
 
-    public <E extends Enum<E>> void loadConstantSet(RubyModule module, Class<E> enumClass) {
-        for (E e : EnumSet.allOf(enumClass)) {
-            Constant c = (Constant) e;
-            if (Character.isUpperCase(c.name().charAt(0))) {
-                module.setConstant(c.name(), newFixnum(c.intValue()));
-            }
+    /**
+     * Define all constants from the given jnr-constants enum which are defined on the current platform.
+     *
+     * @param module the module in which we want to define the constants
+     * @param enumClass the enum class of the constants to define
+     * @param <C> the enum type, which must implement {@link Constant}.
+     */
+    public <C extends Enum<C> & Constant> void loadConstantSet(RubyModule module, Class<C> enumClass) {
+        for (C constant : EnumSet.allOf(enumClass)) {
+            String name = constant.name();
+            if (constant.defined() && Character.isUpperCase(name.charAt(0))) {
+                    module.setConstant(name, newFixnum(constant.intValue()));
+                }
         }
     }
+
+    /**
+     * Define all constants from the named jnr-constants set which are defined on the current platform.
+     *
+     * @param module the module in which we want to define the constants
+     * @param constantSetName the name of the constant set from which to get the constants
+     */
     public void loadConstantSet(RubyModule module, String constantSetName) {
         for (Constant c : ConstantSet.getConstantSet(constantSetName)) {
-            if (Character.isUpperCase(c.name().charAt(0))) {
+            if (c.defined() && Character.isUpperCase(c.name().charAt(0))) {
                 module.setConstant(c.name(), newFixnum(c.intValue()));
             }
         }
@@ -4905,7 +5069,7 @@ public final class Ruby implements Constantizable {
         synchronized (this) {
             mriRecursionGuard = this.mriRecursionGuard;
             if (mriRecursionGuard != null) return mriRecursionGuard;
-            return mriRecursionGuard = new MRIRecursionGuard(this);
+            return this.mriRecursionGuard = new MRIRecursionGuard(this);
         }
     }
 
@@ -5072,6 +5236,7 @@ public final class Ruby implements Constantizable {
     private ThreadService threadService;
 
     private final POSIX posix;
+    private POSIX nativePosix;
 
     private final ObjectSpace objectSpace = new ObjectSpace();
 
@@ -5130,6 +5295,8 @@ public final class Ruby implements Constantizable {
     private final RubyClass yielderClass;
     private final RubyClass fiberClass;
     private final RubyClass generatorClass;
+    private final RubyClass chainClass;
+    private final RubyClass aseqClass;
     private final RubyClass arrayClass;
     private final RubyClass hashClass;
     private final RubyClass rangeClass;
@@ -5252,7 +5419,7 @@ public final class Ruby implements Constantizable {
     private PrintStream err;
 
     // Java support
-    private JavaSupport javaSupport;
+    private final JavaSupport javaSupport;
     private final JRubyClassLoader jrubyClassLoader;
 
     // Management/monitoring
@@ -5261,7 +5428,7 @@ public final class Ruby implements Constantizable {
     // Parser stats
     private final ParserStats parserStats;
 
-    private InlineStats inlineStats;
+    private final InlineStats inlineStats;
 
     // Compilation
     private final JITCompiler jitCompiler;
@@ -5305,9 +5472,15 @@ public final class Ruby implements Constantizable {
         }
     };
 
-    // Contains a list of all blocks (as Procs) that should be called when
-    // the runtime environment exits.
-    private final Stack<RubyProc> atExitBlocks = new Stack<>();
+    /**
+     * Reserved for userland at_exit logic that runs before internal services start shutting down.
+     */
+    private final List<ExitFunction> exitBlocks = Collections.synchronizedList(new LinkedList<>());
+
+    /**
+     * Registry of shutdown operations that should happen after all user code has been run (e.g. at_exit hooks).
+     */
+    private final List<ExitFunction> postExitBlocks = Collections.synchronizedList(new LinkedList<>());
 
     private Profile profile;
 
@@ -5443,6 +5616,63 @@ public final class Ruby implements Constantizable {
 
     public void addToObjectSpace(boolean useObjectSpace, IRubyObject object) {
         objectSpacer.addToObjectSpace(this, useObjectSpace, object);
+    }
+
+    public interface ExitFunction extends ToIntFunction<ThreadContext> {
+        default boolean matches(Object o) { return o == this; }
+    }
+
+    private class ProcExitFunction implements ExitFunction {
+        private final RubyProc proc;
+
+        public ProcExitFunction(RubyProc proc) {
+            this.proc = proc;
+        }
+
+        public boolean matches(Object o) {
+            return (o instanceof RubyProc) && ((RubyProc) o).getBlock() == proc.getBlock();
+        }
+
+        @Override
+        public int applyAsInt(ThreadContext context) {
+            try {
+                // IRubyObject oldExc = context.runtime.getGlobalVariables().get("$!"); // Save $!
+                proc.call(context, IRubyObject.NULL_ARRAY);
+
+            } catch (LocalJumpError rj) {
+                // END { return } can generally be statically determined during build time so we generate the LJE
+                // then.  This if captures the static side of this. See IReturnJump below for dynamic case
+                RubyLocalJumpError rlje = (RubyLocalJumpError) rj.getException();
+                String filename = proc.getBlock().getBinding().filename;
+
+                if (rlje.getReason() == RubyLocalJumpError.Reason.RETURN) {
+                    Ruby.this.getWarnings().warn(filename, "unexpected return");
+                } else {
+                    Ruby.this.getWarnings().warn(filename, "break from proc-closure");
+                }
+
+            } catch (SystemExit exit) {
+                RubyException raisedException = exit.getException();
+                // adopt new exit code
+                // see jruby/jruby#5437 and related issues
+                return raisedException.callMethod(context, "status").convertToInteger().getIntValue();
+            } catch (RaiseException re) {
+                // display and set error result but do not propagate other errors raised during at_exit
+                Ruby.this.printError(re.getException());
+                return 1;
+
+            } catch (IRReturnJump e) {
+                // This capture dynamic returns happening in an end block where it cannot be statically determined
+                // (like within an eval.
+
+                // This is partially similar to code in eval_error.c:error_handle but with less actual cases.
+                // IR treats END blocks are closures and as such we see this special non-local return jump type
+                // bubble this far out as we exec each END proc.
+                Ruby.this.getWarnings().warn(proc.getBlock().getBinding().filename, "unexpected return");
+            }
+
+            return 0; // no errors
+        }
     }
 
     private final RubyArray emptyFrozenArray;

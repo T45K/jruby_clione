@@ -124,6 +124,8 @@ public class OptimizeDynScopesPass extends CompilerPass {
     public Object execute(FullInterpreterContext fic, Object... data) {
         // Cannot run this on scopes that require dynamic scopes
         if (fic.getFlags().contains(IRFlags.REQUIRES_DYNSCOPE)) return null;
+        if (fic.getFlags().contains(IRFlags.HAS_END_BLOCKS)) return null;
+
 
         eliminateLocalVars(fic);
 

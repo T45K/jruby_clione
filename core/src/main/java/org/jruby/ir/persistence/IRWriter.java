@@ -5,6 +5,7 @@ import org.jruby.ir.IRMethod;
 import org.jruby.ir.IRScope;
 import org.jruby.ir.IRScriptBody;
 import org.jruby.ir.instructions.Instr;
+import org.jruby.ir.interpreter.InterpreterContext;
 import org.jruby.parser.StaticScope;
 
 import java.io.IOException;
@@ -43,11 +44,9 @@ public class IRWriter {
         file.startEncodingScopeInstrs(scope);
 
         // Currently methods are only lazy scopes so we need to build them if we decide to persist them.
-        if (scope instanceof IRMethod && !scope.hasBeenBuilt()) {
-            ((IRMethod) scope).lazilyAcquireInterpreterContext();
-        }
+        InterpreterContext context = scope.builtInterpreterContext();
 
-        for (Instr instr: scope.getInterpreterContext().getInstructions()) {
+        for (Instr instr: context.getInstructions()) {
             file.encode(instr);
         }
 
@@ -69,15 +68,19 @@ public class IRWriter {
     // other scopes: {type,name,linenumber,lexical_parent_name, lexical_parent_line,{static_scope}, instrs_offset}
     // for non-for scopes is_for,arity, and arg_type will be 0.
     private static void persistScopeHeader(IRWriterEncoder file, IRScope scope) {
-        if (RubyInstanceConfig.IR_WRITING_DEBUG) System.out.println("Writing Scope Header");
+        if (shouldLog(file)) System.out.println("persistScopeHeader(start)");
         file.startEncodingScopeHeader(scope);
-        scope.persistScopeHeader(file);
+        scope.persistScopeHeader(file); // impls in IRClosure and IRScope.
 
         if (RubyInstanceConfig.IR_WRITING_DEBUG) System.out.println("NAME = " + scope.getId());
         if (scope instanceof IRScriptBody) {
-            file.encode(scope.getId());
+            if (shouldLog(file)) System.out.println("persistScopeHeader: file = " + scope.getFile());
+            file.encode(scope.getFile());
         } else {
+
+            if (shouldLog(file)) System.out.println("persistScopeHeader: id   = " + scope.getId());
             file.encodeRaw(scope.getName());
+            if (shouldLog(file)) System.out.println("persistScopeHeader(encode parent)");
             file.encode(scope.getLexicalParent());
         }
 
@@ -88,9 +91,17 @@ public class IRWriter {
 
     // {type,[variables],signature}
     private static void persistStaticScope(IRWriterEncoder file, StaticScope staticScope) {
+        if (shouldLog(file)) System.out.println("persistStaticScope");
         file.encode(staticScope.getType());
+        // This naively looks like a bug because these represent id's and not properly encoded names BUT all of those
+        // symbols for these ids will be created when IRScope loads the LocalVariable versions of these...so this is ok.
+        file.encode(staticScope.getFile());
         file.encode(staticScope.getVariables());
         file.encode(staticScope.getFirstKeywordIndex());
         file.encode(staticScope.getSignature());
+    }
+
+    public static boolean shouldLog(IRWriterEncoder encoder) {
+        return RubyInstanceConfig.IR_WRITING_DEBUG && !encoder.isAnalyzer();
     }
 }

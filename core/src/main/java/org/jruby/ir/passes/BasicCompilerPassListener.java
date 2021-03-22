@@ -14,7 +14,7 @@ import java.util.Map;
 public class BasicCompilerPassListener implements CompilerPassListener {
     private static final Logger LOG = LoggerFactory.getLogger(BasicCompilerPassListener.class);
 
-    private Map<CompilerPass, Long> times = new HashMap<CompilerPass, Long>();
+    private final Map<CompilerPass, Long> times = new HashMap<>();
 
     @Override
     public void alreadyExecuted(CompilerPass passClass, FullInterpreterContext fic, Object data, boolean childScope) {
@@ -22,7 +22,7 @@ public class BasicCompilerPassListener implements CompilerPassListener {
 
     @Override
     public void startExecute(CompilerPass pass, FullInterpreterContext fic, boolean childScope) {
-        times.put(pass, new Long(System.currentTimeMillis()));
+        times.put(pass, Long.valueOf(System.currentTimeMillis()));
         LOG.info("Starting " + pass.getLabel() + " on scope " + fic.getScope());
     }
 

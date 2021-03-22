@@ -149,12 +149,12 @@ public class RubyClass extends RubyModule {
         this.allocator = new ObjectAllocator() {
             public IRubyObject allocate(Ruby runtime, RubyClass klazz) {
                 try {
-                    RubyBasicObject object = (RubyBasicObject)cls.newInstance();
+                    RubyBasicObject object = (RubyBasicObject)cls.getConstructor().newInstance();
                     object.setMetaClass(klazz);
                     return object;
-                } catch (InstantiationException ie) {
+                } catch (InstantiationException | InvocationTargetException ie) {
                     throw runtime.newTypeError("could not allocate " + cls + " with default constructor:\n" + ie);
-                } catch (IllegalAccessException iae) {
+                } catch (IllegalAccessException | NoSuchMethodException iae) {
                     throw runtime.newSecurityError("could not allocate " + cls + " due to inaccessible default constructor:\n" + iae);
                 }
             }
@@ -905,35 +905,35 @@ public class RubyClass extends RubyModule {
     /** rb_class_new_instance
     *
     */
-    @JRubyMethod(name = "new", omit = true)
+    @JRubyMethod(name = "new")
     public IRubyObject newInstance(ThreadContext context, Block block) {
         IRubyObject obj = allocate();
         baseCallSites[CS_IDX_INITIALIZE].call(context, obj, obj, block);
         return obj;
     }
 
-    @JRubyMethod(name = "new", omit = true)
+    @JRubyMethod(name = "new")
     public IRubyObject newInstance(ThreadContext context, IRubyObject arg0, Block block) {
         IRubyObject obj = allocate();
         baseCallSites[CS_IDX_INITIALIZE].call(context, obj, obj, arg0, block);
         return obj;
     }
 
-    @JRubyMethod(name = "new", omit = true)
+    @JRubyMethod(name = "new")
     public IRubyObject newInstance(ThreadContext context, IRubyObject arg0, IRubyObject arg1, Block block) {
         IRubyObject obj = allocate();
         baseCallSites[CS_IDX_INITIALIZE].call(context, obj, obj, arg0, arg1, block);
         return obj;
     }
 
-    @JRubyMethod(name = "new", omit = true)
+    @JRubyMethod(name = "new")
     public IRubyObject newInstance(ThreadContext context, IRubyObject arg0, IRubyObject arg1, IRubyObject arg2, Block block) {
         IRubyObject obj = allocate();
         baseCallSites[CS_IDX_INITIALIZE].call(context, obj, obj, arg0, arg1, arg2, block);
         return obj;
     }
 
-    @JRubyMethod(name = "new", rest = true, omit = true)
+    @JRubyMethod(name = "new", rest = true)
     public IRubyObject newInstance(ThreadContext context, IRubyObject[] args, Block block) {
         IRubyObject obj = allocate();
         baseCallSites[CS_IDX_INITIALIZE].call(context, obj, obj, args, block);

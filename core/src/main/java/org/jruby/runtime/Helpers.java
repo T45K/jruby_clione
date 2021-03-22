@@ -8,6 +8,9 @@ import java.lang.reflect.Array;
 import java.net.BindException;
 import java.net.PortUnreachableException;
 import java.nio.channels.ClosedChannelException;
+import java.nio.channels.NonReadableChannelException;
+import java.nio.channels.NonWritableChannelException;
+import java.nio.channels.NotYetConnectedException;
 import java.nio.charset.Charset;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.AtomicMoveNotSupportedException;
@@ -18,12 +21,16 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.NotDirectoryException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.concurrent.Callable;
+import java.util.function.Function;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import jnr.constants.platform.Errno;
 import org.jruby.*;
@@ -49,6 +56,7 @@ import org.jruby.javasupport.JavaClass;
 import org.jruby.javasupport.JavaUtil;
 import org.jruby.javasupport.proxy.InternalJavaProxy;
 import org.jruby.parser.StaticScope;
+import org.jruby.parser.StaticScopeFactory;
 import org.jruby.runtime.JavaSites.HelpersSites;
 import org.jruby.runtime.backtrace.BacktraceData;
 import org.jruby.runtime.builtin.IRubyObject;
@@ -261,6 +269,13 @@ public class Helpers {
             return errnoFromMessage(dnee);
         } catch (BindException be) {
             return errnoFromMessage(be);
+        } catch (NotYetConnectedException nyce) {
+            return Errno.ENOTCONN;
+        } catch (NonReadableChannelException | NonWritableChannelException nrce) {
+            // raised by NIO for invalid combinations of file options (read + truncate, for example)
+            return Errno.EINVAL;
+        } catch (IllegalArgumentException nrce) {
+            return Errno.EINVAL;
         } catch (Throwable t2) {
             // fall through
         }
@@ -300,6 +315,7 @@ public class Helpers {
                 case "Address already in use":
                     return Errno.EADDRINUSE;
                 case "Cannot assign requested address":
+                case "Can't assign requested address":
                     return Errno.EADDRNOTAVAIL;
                 case "No space left on device":
                     return Errno.ENOSPC;
@@ -323,18 +339,76 @@ public class Helpers {
     }
 
     /**
-     * Java does not give us enough information for specific error conditions
-     * so we are reduced to divining them through string matches...
+     * Construct an appropriate error (which may ultimately not be an IOError) for a given IOException.
      *
-     * TODO: Should ECONNABORTED get thrown earlier in the descriptor itself or is it ok to handle this late?
-     * TODO: Should we include this into Errno code somewhere do we can use this from other places as well?
+     * If this method is used on an exception which can't be translated to a Ruby error using {@link #newErrorFromException(Ruby, Exception)}
+     * then a RuntimeError will be returned, due to the unhandled exception type.
+     *
+     * @param runtime the current runtime
+     * @param ex the exception to translate into a Ruby error
+     * @return a RaiseException subtype instance appropriate for the given exception
      */
     public static RaiseException newIOErrorFromException(Ruby runtime, IOException ex) {
-        Errno errno = errnoFromException(ex);
+        return (RaiseException) newErrorFromException(runtime, ex, (t) -> runtime.newRuntimeError("unexpected Java exception: " + ex.toString()));
+    }
 
-        if (errno == null) throw runtime.newIOError(ex.getLocalizedMessage());
+    /**
+     * Return a Ruby-friendly Throwable for a given Throwable.
+     *
+     * The following translations will be attempted in order:
+     *
+     * <ul>
+     *     <li>if the Throwable is already a Ruby exception type, return it as-is</li>
+     *     <li>convert to a Ruby Errno exception via {@link #errnoFromException(Throwable)}</li>
+     *     <li>convert to a Ruby IOError if the exception is a java.io.IOException</li>
+     *     <li>using the provided function as a fallback transformation</li>
+     * </ul>
+     *
+     * @param runtime the current runtime
+     * @param t the exception to translate into a Ruby error
+     * @param els a fallback function if the exception cannot be translated
+     * @return a RaiseException subtype instance appropriate for the given exception
+     */
+    public static Throwable newErrorFromException(Ruby runtime, Throwable t, Function<Throwable, Throwable> els) {
+        if (t instanceof RaiseException) {
+            // already a Ruby-friendly Throwable
+            return t;
+        }
 
-        throw runtime.newErrnoFromErrno(errno, ex.getLocalizedMessage());
+        Errno errno = errnoFromException(t);
+
+        if (errno != null) {
+            return runtime.newErrnoFromErrno(errno, t.getLocalizedMessage());
+        } else if (t instanceof IOException) {
+            return runtime.newIOError(t.getLocalizedMessage());
+        }
+
+        return els.apply(t);
+    }
+
+    /**
+     * Simplified form of Ruby#newErrorFromException with no default function.
+     *
+     * @param runtime the current runtime
+     * @param t the exception to translate into a Ruby error
+     * @return a RaiseException subtype instance appropriate for the given exception
+     */
+    public static Throwable newErrorFromException(Ruby runtime, Throwable t) {
+        return newErrorFromException(runtime, t, t0 -> t0);
+    }
+
+    /**
+     * Throw an appropriate Ruby-friendly error or exception for a given Java exception.
+     *
+     * This method will first attempt to translate the exception into a Ruby error using {@link #newErrorFromException(Ruby, Throwable, Function)}.
+     *
+     * Failing that, it will raise the original Java exception as-is.
+     *
+     * @param runtime the current runtime
+     * @param t the exception to raise as an error, if appropriate, or as itself otherwise
+     */
+    public static void throwErrorFromException(Ruby runtime, Throwable t) {
+        throwException(newErrorFromException(runtime, t));
     }
 
     public static RubyModule getNthScopeModule(StaticScope scope, int depth) {
@@ -735,28 +809,33 @@ public class Helpers {
 
     }
 
+    @Deprecated
     public static IRubyObject backref(ThreadContext context) {
         return RubyRegexp.getBackRef(context);
     }
 
+    @Deprecated
     public static IRubyObject backrefLastMatch(ThreadContext context) {
         IRubyObject backref = context.getBackRef();
 
         return RubyRegexp.last_match(backref);
     }
 
+    @Deprecated
     public static IRubyObject backrefMatchPre(ThreadContext context) {
         IRubyObject backref = context.getBackRef();
 
         return RubyRegexp.match_pre(backref);
     }
 
+    @Deprecated
     public static IRubyObject backrefMatchPost(ThreadContext context) {
         IRubyObject backref = context.getBackRef();
 
         return RubyRegexp.match_post(backref);
     }
 
+    @Deprecated
     public static IRubyObject backrefMatchLast(ThreadContext context) {
         IRubyObject backref = context.getBackRef();
 
@@ -1476,13 +1555,25 @@ public class Helpers {
         return context.getLastLine();
     }
 
-    public static IRubyObject setBackref(Ruby runtime, ThreadContext context, IRubyObject value) {
-        if (!value.isNil() && !(value instanceof RubyMatchData)) throw runtime.newTypeError(value, runtime.getMatchData());
+    public static IRubyObject setBackref(ThreadContext context, IRubyObject value) {
+        if (!(value instanceof RubyMatchData) && value != context.nil) {
+            throw context.runtime.newTypeError(value, context.runtime.getMatchData());
+        }
         return context.setBackRef(value);
     }
 
+    @Deprecated
+    public static IRubyObject setBackref(Ruby runtime, ThreadContext context, IRubyObject value) {
+        return setBackref(context, value);
+    }
+
+    public static IRubyObject getBackref(ThreadContext context) {
+        return RubyRegexp.getBackRef(context);
+    }
+
+    @Deprecated
     public static IRubyObject getBackref(Ruby runtime, ThreadContext context) {
-        return backref(context); // backref(context) method otherwise not used
+        return RubyRegexp.getBackRef(context);
     }
 
     public static RubyArray arrayValue(IRubyObject value) {
@@ -1747,6 +1838,45 @@ public class Helpers {
     public static StaticScope decodeScopeAndDetermineModule(ThreadContext context, StaticScope parent, String scopeString) {
         StaticScope scope = decodeScope(context, parent, scopeString);
         scope.determineModule();
+
+        return scope;
+    }
+
+    public static String describeScope(StaticScope scope) {
+        Signature signature = scope.getSignature();
+        Collection<String> instanceVariableNames = scope.getInstanceVariableNames();
+        String descriptor =
+                Integer.toString(scope.getType().ordinal()) + ';'
+                + scope.getFile() + ';'
+                + Arrays.stream(scope.getVariables()).collect(Collectors.joining(",")) + ';'
+                + scope.getFirstKeywordIndex() + ';' +
+                + (signature == null ? Signature.NO_ARGUMENTS.encode() : signature.encode()) + ';'
+                + scope.getIRScope().getScopeType().ordinal() + ';'
+                + (instanceVariableNames.size() > 0
+                        ? instanceVariableNames.stream().collect(Collectors.joining(","))
+                        : "NONE");
+
+        return descriptor;
+    }
+
+    public static StaticScope restoreScope(String descriptor, StaticScope enclosingScope) {
+        String[] bits = descriptor.split(";");
+
+        StaticScope.Type type = StaticScope.Type.fromOrdinal(Integer.parseInt(bits[0]));
+        String file = bits[1];
+
+        String[] varNames = bits[2].split(",");
+        int kwIndex = Integer.parseInt(bits[3]);
+        Signature signature = Signature.decode(Long.parseLong(bits[4]));
+        IRScopeType scopeType = IRScopeType.fromOrdinal(Integer.parseInt(bits[5]));
+        String encodedIvars = bits[6];
+        Collection<String> ivarNames = encodedIvars.equals("NONE") ? Collections.EMPTY_LIST : Arrays.asList(encodedIvars.split(","));
+
+        StaticScope scope = StaticScopeFactory.newStaticScope(enclosingScope, type, file, varNames, kwIndex);
+
+        scope.setSignature(signature);
+        scope.setScopeType(scopeType);
+        scope.setInstanceVariableNames(ivarNames);
 
         return scope;
     }
@@ -2018,7 +2148,7 @@ public class Helpers {
     }
 
     public static void checkArgumentCount(ThreadContext context, int length, int min, int max) {
-        int expected = 0;
+        int expected;
         if (length < min) {
             expected = min;
         } else if (max > -1 && length > max) {
@@ -2098,34 +2228,6 @@ public class Helpers {
             scopeOffsets[i] = (((int)depth) << 16) | (int)off;
         }
         return scopeOffsets;
-    }
-
-    @Deprecated // not-used
-    public static IRubyObject match2AndUpdateScope(IRubyObject receiver, ThreadContext context, IRubyObject value, String scopeOffsets) {
-        IRubyObject match = ((RubyRegexp)receiver).op_match(context, value);
-        updateScopeWithCaptures(context, decodeCaptureOffsets(scopeOffsets), match);
-        return match;
-    }
-
-    public static void updateScopeWithCaptures(ThreadContext context, int[] scopeOffsets, IRubyObject result) {
-        Ruby runtime = context.runtime;
-        if (result.isNil()) { // match2 directly calls match so we know we can count on result
-            IRubyObject nil = runtime.getNil();
-
-            for (int i = 0; i < scopeOffsets.length; i++) {
-                // SSS FIXME: This is not doing the offset/depth extraction as in the else case
-                context.getCurrentScope().setValue(nil, scopeOffsets[i], 0);
-            }
-        } else {
-            RubyMatchData matchData = (RubyMatchData)context.getBackRef();
-            // FIXME: Mass assignment is possible since we know they are all locals in the same
-            //   scope that are also contiguous
-            IRubyObject[] namedValues = matchData.getNamedBackrefValues(runtime);
-
-            for (int i = 0; i < scopeOffsets.length; i++) {
-                context.getCurrentScope().setValue(namedValues[i], scopeOffsets[i] & 0xffff, scopeOffsets[i] >> 16);
-            }
-        }
     }
 
     @Deprecated
